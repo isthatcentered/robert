@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. The catalogue interface direction is accepted; detailed contracts are being resolved through a design interview.
+Superseded by [ADR 0004](0004-whole-document-catalog.md), which adopts a whole-document `Read`/`Write` interface. The proposal below is retained for historical context.
 
 ## Context
 

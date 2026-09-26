@@ -200,10 +200,11 @@ func TestRemoveRejectsRelativeSavedPathWithoutChangingConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	response := command(t, 1, "remove", "https://example.invalid/demo.git")
-	assertField(t, response, "error", "failed to read configuration")
+	assertField(t, response, "error", "saved checkout path must be a nonempty absolute path")
 	failureContext := response["context"].(map[string]any)
-	if !strings.Contains(stringField(t, failureContext, "cause"), "repositories[0]") || !strings.Contains(stringField(t, failureContext, "cause"), "absolute checkout path") {
-		t.Fatalf("missing invalid entry context: %v", failureContext)
+	assertField(t, failureContext, "path", "relative/path")
+	if stringField(t, failureContext, "hint") == "" {
+		t.Fatal("missing correction hint")
 	}
 	after, err := os.ReadFile(configPath)
 	if err != nil {
@@ -291,5 +292,20 @@ func writeJSON(t *testing.T, path string, value any) {
 	}
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRemoveFromMissingCatalogueDoesNotCreateFile(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	result := command(t, 1, "remove", "owner/repo")
+	assertField(t, result, "error", "repository installation not found in configuration")
+	failure := result["context"].(map[string]any)
+	assertField(t, failure, "url", "https://github.com/owner/repo.git")
+	if stringField(t, failure, "hint") == "" {
+		t.Fatal("missing resolution hint")
+	}
+	if _, err := os.Stat(filepath.Join(home, ".robert")); !os.IsNotExist(err) {
+		t.Fatalf("remove created a catalogue: %v", err)
 	}
 }

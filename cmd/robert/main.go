@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"path/filepath"
 
+	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/add"
-	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/list"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/remove"
@@ -34,18 +33,17 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return writeError(stderr, problem.New("failed to find home directory", map[string]any{"cause": err.Error()}))
 	}
-	path := filepath.Join(home, ".robert")
-	store := config.Store{Path: path, Home: home}
+	store := catalog.NewJSONFileCatalog(home)
 	var result any
 	switch args[0] {
 	case "add":
-		logic := add.Logic{Config: store, Git: add.GitCLI{}, Dirs: add.Directory{}, ConfigPath: path}
+		logic := add.Logic{Catalog: store, Git: add.GitCLI{}, Dirs: add.Directory{}}
 		result, err = add.Handle(ctx, args[1:], logic)
 	case "remove":
-		logic := remove.Logic{Config: store, Dirs: remove.Directory{}, ConfigPath: path}
+		logic := remove.Logic{Catalog: store, Dirs: remove.Directory{}}
 		result, err = remove.Handle(args[1:], logic)
 	case "list":
-		logic := list.Logic{Config: store, ConfigPath: path}
+		logic := list.Logic{Catalog: store}
 		result, err = list.Handle(args[1:], logic)
 	}
 	if err != nil {

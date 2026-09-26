@@ -6,13 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/isthatcentered/robert/internal/cli/problem"
+	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 type Logic struct {
-	Config     ConfigStore
-	ConfigPath string
+	Catalog catalog.Catalog
 }
 
 type Result struct {
@@ -22,12 +21,9 @@ type Result struct {
 }
 
 func (l Logic) List(selection Selection) ([]Result, error) {
-	doc, _, err := l.Config.Load()
+	doc, err := l.Catalog.Read()
 	if err != nil {
-		return nil, problem.New("failed to read configuration", map[string]any{
-			"path": l.ConfigPath, "cause": err.Error(),
-			"hint": "check file permissions and correct the reported configuration fields before retrying",
-		})
+		return nil, err
 	}
 	type match struct {
 		result  Result
@@ -39,12 +35,12 @@ func (l Logic) List(selection Selection) ([]Result, error) {
 		if !strings.Contains(strings.ToLower(repository.SearchPath(entry.URL)), search) {
 			continue
 		}
-		if selection.Reference != nil && !entry.Reference.Equal(*selection.Reference) {
+		if selection.Reference != nil && !repository.Reference(entry.Reference).Equal(*selection.Reference) {
 			continue
 		}
-		// Load has already validated every timestamp, including unmatched entries.
+		// Saved configuration is authoritative; timestamps are trusted to be valid.
 		addedAt, _ := time.Parse(time.RFC3339Nano, entry.AddedAt)
-		matches = append(matches, match{Result{entry.URL, entry.Reference, entry.Path}, addedAt})
+		matches = append(matches, match{Result{entry.URL, repository.Reference(entry.Reference), entry.Path}, addedAt})
 	}
 	slices.SortFunc(matches, func(a, b match) int {
 		return cmp.Or(

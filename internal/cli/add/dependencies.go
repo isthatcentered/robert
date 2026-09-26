@@ -3,14 +3,8 @@ package add
 import (
 	"context"
 
-	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/repository"
 )
-
-type ConfigStore interface {
-	Load() (config.Document, bool, error)
-	Save(config.Document) error
-}
 
 type Git interface {
 	DefaultBranch(context.Context, string) (string, error)

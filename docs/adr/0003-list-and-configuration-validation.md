@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. The saved-field validation requirement is superseded by [ADR 0004](0004-whole-document-catalog.md); saved configuration is now trusted.
 
 ## Context
 

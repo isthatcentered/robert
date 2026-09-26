@@ -10,29 +10,28 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/isthatcentered/robert/internal/cli/config"
-	"github.com/isthatcentered/robert/internal/cli/repository"
+	"github.com/isthatcentered/robert/internal/catalog"
 )
 
 func TestListSearchAndReferenceCombinations(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	sha := "1234567890abcdef1234567890abcdef12345678"
-	doc := config.New(home)
-	entry := func(remote, kind, value, path string) config.Entry {
-		return config.Entry{URL: remote, Reference: repository.Reference{Type: kind, Value: value}, Path: filepath.Join(home, path), AddedAt: "2026-09-26T12:00:00Z"}
+	doc := catalog.Document{Version: 1, InstallDir: filepath.Join(home, ".agents", "robert"), Repositories: []catalog.Entry{}}
+	entry := func(remote, kind, value, path string) catalog.Entry {
+		return catalog.Entry{URL: remote, Reference: catalog.Reference{Type: kind, Value: value}, Path: filepath.Join(home, path), AddedAt: "2026-09-26T12:00:00Z"}
 	}
 	api := "https://github.com/acme/api.git"
 	web := "https://github.com/acme/web.git"
 	tools := "https://github.com/tools/api.git"
-	doc.Repositories = []config.Entry{
+	doc.Repositories = []catalog.Entry{
 		entry(tools, "branch", "main", "tools-api-main"),
 		entry(web, "commit", sha, "acme-web-commit"),
 		entry(api, "tag", "v1.0", "acme-api-v1"),
 		entry(api, "branch", "main", "acme-api-main"),
 	}
 	path := filepath.Join(home, ".robert")
-	writeJSON(t, path, doc)
+	writeCatalog(t, path, doc)
 	before, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -109,7 +108,7 @@ func TestListEmptyCatalogue(t *testing.T) {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("list created a catalogue: %v", err)
 	}
-	writeJSON(t, path, config.New(home))
+	writeCatalog(t, path, catalog.Document{Version: 1, InstallDir: filepath.Join(home, ".agents", "robert"), Repositories: []catalog.Entry{}})
 	if results := listCommand(t, "--branch", "main"); len(results) != 0 {
 		t.Fatalf("empty catalogue returned %v", results)
 	}
@@ -118,7 +117,7 @@ func TestListEmptyCatalogue(t *testing.T) {
 func TestListSortsChronologicallyAndBreaksTiesWithoutRejectingDuplicates(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	doc := config.New(home)
+	doc := catalog.Document{Version: 1, InstallDir: filepath.Join(home, ".agents", "robert"), Repositories: []catalog.Entry{}}
 	// Chronological order differs from string order for both offsets and fractions.
 	for i, data := range []struct{ kind, value, date string }{
 		{"tag", "z", "2026-09-26T12:00:00+02:00"},
@@ -130,7 +129,7 @@ func TestListSortsChronologicallyAndBreaksTiesWithoutRejectingDuplicates(t *test
 		{"branch", "later", "2026-09-26T10:30:00Z"},
 	} {
 		path := filepath.Join(home, string(rune('a'+i)))
-		doc.Repositories = append(doc.Repositories, config.Entry{URL: "https://example.com/team/api.git", Reference: repository.Reference{Type: data.kind, Value: data.value}, Path: path, AddedAt: data.date})
+		doc.Repositories = append(doc.Repositories, catalog.Entry{URL: "https://example.com/team/api.git", Reference: catalog.Reference{Type: data.kind, Value: data.value}, Path: path, AddedAt: data.date})
 	}
 	path := filepath.Join(home, ".robert")
 	for _, reverse := range []bool{false, true} {
@@ -139,7 +138,7 @@ func TestListSortsChronologicallyAndBreaksTiesWithoutRejectingDuplicates(t *test
 				doc.Repositories[i], doc.Repositories[j] = doc.Repositories[j], doc.Repositories[i]
 			}
 		}
-		writeJSON(t, path, doc)
+		writeCatalog(t, path, doc)
 		results := listCommand(t)
 		var paths []string
 		for _, result := range results {
@@ -151,13 +150,13 @@ func TestListSortsChronologicallyAndBreaksTiesWithoutRejectingDuplicates(t *test
 	}
 }
 
-func TestAllCommandsRejectInvalidCatalogueBeforeFilteringOrMutation(t *testing.T) {
+func TestAllCommandsReportMalformedJSONBeforeFilteringOrMutation(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	path := filepath.Join(home, ".robert")
-	doc := config.New(home)
-	doc.Repositories = []config.Entry{{URL: "https://example.com/unmatched/repo.git", Path: filepath.Join(home, "missing"), Reference: repository.Reference{Type: "branch", Value: "main"}, AddedAt: "broken"}}
-	writeJSON(t, path, doc)
+	if err := os.WriteFile(path, []byte("{"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	before, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -168,7 +167,7 @@ func TestAllCommandsRejectInvalidCatalogueBeforeFilteringOrMutation(t *testing.T
 		failure := result["context"].(map[string]any)
 		assertField(t, failure, "path", path)
 		cause := stringField(t, failure, "cause")
-		if !strings.Contains(cause, "repositories[0]") || !strings.Contains(cause, "addedAt") || stringField(t, failure, "hint") == "" {
+		if !strings.Contains(cause, "invalid JSON") || stringField(t, failure, "hint") == "" {
 			t.Fatalf("missing actionable error context: %v", failure)
 		}
 	}
@@ -215,4 +214,11 @@ func listCommand(t *testing.T, flags ...string) []map[string]any {
 		t.Fatalf("expected JSON array, got %s: %v", stdout.String(), err)
 	}
 	return results
+}
+
+func writeCatalog(t *testing.T, path string, doc catalog.Document) {
+	t.Helper()
+	if err := (catalog.JSONFileCatalog{Path: path}).Write(doc); err != nil {
+		t.Fatal(err)
+	}
 }
