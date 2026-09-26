@@ -1,0 +1,529 @@
+{
+  "started_at": "2026-09-26T20:00:46.467015+00:00",
+  "platform": "Linux-7.2.3-1-cachyos-x86_64-with-glibc2.44",
+  "workers": 16,
+  "rounds": 5,
+  "cases": [
+    {
+      "name": "lifecycle",
+      "status": "passed",
+      "wall_ms": 117.855
+    },
+    {
+      "name": "serial-timing",
+      "status": "passed",
+      "wall_ms": 610.616
+    },
+    {
+      "name": "failed-adds-and-arguments",
+      "status": "passed",
+      "wall_ms": 37.15
+    },
+    {
+      "name": "lock-failure",
+      "status": "passed",
+      "wall_ms": 4.208
+    },
+    {
+      "name": "distinct-1",
+      "status": "passed",
+      "wall_ms": 181.629
+    },
+    {
+      "name": "duplicates-1",
+      "status": "passed",
+      "wall_ms": 56.541
+    },
+    {
+      "name": "mixed-1",
+      "status": "passed",
+      "wall_ms": 227.528
+    },
+    {
+      "name": "same-key-race-1",
+      "status": "passed",
+      "wall_ms": 78.421
+    },
+    {
+      "name": "distinct-2",
+      "status": "passed",
+      "wall_ms": 184.093
+    },
+    {
+      "name": "duplicates-2",
+      "status": "passed",
+      "wall_ms": 56.686
+    },
+    {
+      "name": "mixed-2",
+      "status": "passed",
+      "wall_ms": 233.803
+    },
+    {
+      "name": "same-key-race-2",
+      "status": "passed",
+      "wall_ms": 76.754
+    },
+    {
+      "name": "distinct-3",
+      "status": "passed",
+      "wall_ms": 179.259
+    },
+    {
+      "name": "duplicates-3",
+      "status": "passed",
+      "wall_ms": 57.854
+    },
+    {
+      "name": "mixed-3",
+      "status": "passed",
+      "wall_ms": 232.999
+    },
+    {
+      "name": "same-key-race-3",
+      "status": "passed",
+      "wall_ms": 78.683
+    },
+    {
+      "name": "distinct-4",
+      "status": "passed",
+      "wall_ms": 182.586
+    },
+    {
+      "name": "duplicates-4",
+      "status": "passed",
+      "wall_ms": 57.658
+    },
+    {
+      "name": "mixed-4",
+      "status": "passed",
+      "wall_ms": 237.989
+    },
+    {
+      "name": "same-key-race-4",
+      "status": "passed",
+      "wall_ms": 73.672
+    },
+    {
+      "name": "distinct-5",
+      "status": "passed",
+      "wall_ms": 187.381
+    },
+    {
+      "name": "duplicates-5",
+      "status": "passed",
+      "wall_ms": 55.527
+    },
+    {
+      "name": "mixed-5",
+      "status": "passed",
+      "wall_ms": 228.544
+    },
+    {
+      "name": "same-key-race-5",
+      "status": "passed",
+      "wall_ms": 86.957
+    },
+    {
+      "name": "save-failure",
+      "status": "passed",
+      "wall_ms": 66.419
+    },
+    {
+      "name": "deletion-failure",
+      "status": "issues_found",
+      "wall_ms": 25.206
+    },
+    {
+      "name": "redundant-cleanup-failure",
+      "status": "issues_found",
+      "wall_ms": 158.877
+    }
+  ],
+  "findings": [
+    {
+      "id": "silent-checkout-deletion-failure",
+      "case": "deletion-failure",
+      "severity": "medium",
+      "summary": "remove exits 0 with status removed while checkout files remain",
+      "reproduction": "Add a repository; create a nonempty directory inside the checkout; chmod it 0500; remove the repository as a non-root user.",
+      "impact": "Catalogue entry is gone, list is empty, retrying remove returns not-found, and leftover files need manual cleanup.",
+      "response": {
+        "status": "removed",
+        "url": "https://qa.invalid/demo.git",
+        "path": "/tmp/robert-qa-sg3_w_8a/deletion-failure/.agents/robert/7ed9fee2-45ef-4495-a3a2-ecd50cf08f37",
+        "reference": {
+          "type": "branch",
+          "value": "main"
+        },
+        "addedAt": "2026-09-26T20:00:50.26710406Z"
+      }
+    },
+    {
+      "id": "silent-redundant-clone-cleanup-failure",
+      "case": "redundant-cleanup-failure",
+      "severity": "medium",
+      "summary": "Concurrent duplicate adds both exit 0 but failed redundant-clone cleanup leaves an unregistered directory",
+      "reproduction": "Synchronize two real clones before catalogue update and create a nonempty 0500 directory in each checkout.",
+      "impact": "The losing checkout is absent from list and cannot be removed through the CLI; manual cleanup is required.",
+      "design_note": "Explicitly accepted in ADR 0005; future automatic cleanup is mentioned but not implemented.",
+      "orphan_paths": [
+        "/tmp/robert-qa-sg3_w_8a/redundant-cleanup-failure/.agents/robert/73870616-8ad5-4244-897f-96c73b49e21b"
+      ]
+    }
+  ],
+  "scope": "Local real Git fixtures; no internet latency; Linux/macOS only",
+  "revision": "71aa25d75df2dbbcf3288e02e473bab39f421459",
+  "go_version": "go version go1.27.1-X:nodwarf5 linux/amd64",
+  "git_version": "git version 2.55.0",
+  "temporary_root": "/tmp/robert-qa-sg3_w_8a",
+  "build_ms": 148.684,
+  "cleanup_verified": true,
+  "total_wall_ms": 3961.55,
+  "timings": {
+    "add_success": {
+      "count": 434,
+      "median_ms": 34.037,
+      "p95_ms": 43.3,
+      "max_ms": 154.607
+    },
+    "add_error": {
+      "count": 8,
+      "median_ms": 5.664,
+      "p95_ms": 18.346,
+      "max_ms": 18.346
+    },
+    "remove_success": {
+      "count": 282,
+      "median_ms": 4.858,
+      "p95_ms": 29.599,
+      "max_ms": 35.101
+    },
+    "remove_error": {
+      "count": 158,
+      "median_ms": 5.207,
+      "p95_ms": 18.002,
+      "max_ms": 23.994
+    },
+    "list_success": {
+      "count": 174,
+      "median_ms": 1.763,
+      "p95_ms": 30.556,
+      "max_ms": 34.235
+    },
+    "list_error": {
+      "count": 1,
+      "median_ms": 1.109,
+      "p95_ms": 1.109,
+      "max_ms": 1.109
+    }
+  },
+  "serial_timings": {
+    "add": {
+      "count": 20,
+      "median_ms": 17.989,
+      "p95_ms": 19.054,
+      "max_ms": 21.548
+    },
+    "remove": {
+      "count": 20,
+      "median_ms": 1.71,
+      "p95_ms": 2.02,
+      "max_ms": 2.448
+    },
+    "list": {
+      "count": 40,
+      "median_ms": 1.34,
+      "p95_ms": 1.635,
+      "max_ms": 2.133
+    }
+  },
+  "status": "issues_found",
+  "command_count": 1057,
+  "project_checks": [
+    {
+      "command": [
+        "go",
+        "test",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "wall_ms": 444.659,
+      "stdout": "ok  \tgithub.com/isthatcentered/robert/cmd/robert\t0.129s\nok  \tgithub.com/isthatcentered/robert/internal/catalog\t0.274s\nok  \tgithub.com/isthatcentered/robert/internal/cli/add\t0.004s\nok  \tgithub.com/isthatcentered/robert/internal/cli/list\t0.002s\n?   \tgithub.com/isthatcentered/robert/internal/cli/problem\t[no test files]\nok  \tgithub.com/isthatcentered/robert/internal/cli/remove\t0.003s\nok  \tgithub.com/isthatcentered/robert/internal/cli/repository\t0.002s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-race",
+        "-count=1",
+        "./..."
+      ],
+      "exit_code": 0,
+      "wall_ms": 1546.025,
+      "stdout": "ok  \tgithub.com/isthatcentered/robert/cmd/robert\t1.157s\nok  \tgithub.com/isthatcentered/robert/internal/catalog\t1.355s\nok  \tgithub.com/isthatcentered/robert/internal/cli/add\t1.015s\nok  \tgithub.com/isthatcentered/robert/internal/cli/list\t1.012s\n?   \tgithub.com/isthatcentered/robert/internal/cli/problem\t[no test files]\nok  \tgithub.com/isthatcentered/robert/internal/cli/remove\t1.012s\nok  \tgithub.com/isthatcentered/robert/internal/cli/repository\t1.012s\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "exit_code": 0,
+      "wall_ms": 41.338,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "batches": [
+    {
+      "case": "distinct-1",
+      "commands": 16,
+      "wall_ms": 42.843,
+      "commands_per_second": 373.46
+    },
+    {
+      "case": "distinct-1",
+      "commands": 16,
+      "wall_ms": 7.203,
+      "commands_per_second": 2221.24
+    },
+    {
+      "case": "duplicates-1",
+      "commands": 16,
+      "wall_ms": 37.434,
+      "commands_per_second": 427.42
+    },
+    {
+      "case": "duplicates-1",
+      "commands": 16,
+      "wall_ms": 7.96,
+      "commands_per_second": 2010.01
+    },
+    {
+      "case": "mixed-1",
+      "commands": 16,
+      "wall_ms": 38.511,
+      "commands_per_second": 415.46
+    },
+    {
+      "case": "mixed-1",
+      "commands": 48,
+      "wall_ms": 52.072,
+      "commands_per_second": 921.81
+    },
+    {
+      "case": "mixed-1",
+      "commands": 16,
+      "wall_ms": 7.216,
+      "commands_per_second": 2217.24
+    },
+    {
+      "case": "same-key-race-1",
+      "commands": 32,
+      "wall_ms": 44.692,
+      "commands_per_second": 716.02
+    },
+    {
+      "case": "distinct-2",
+      "commands": 16,
+      "wall_ms": 41.725,
+      "commands_per_second": 383.47
+    },
+    {
+      "case": "distinct-2",
+      "commands": 16,
+      "wall_ms": 7.214,
+      "commands_per_second": 2217.82
+    },
+    {
+      "case": "duplicates-2",
+      "commands": 16,
+      "wall_ms": 38.644,
+      "commands_per_second": 414.04
+    },
+    {
+      "case": "duplicates-2",
+      "commands": 16,
+      "wall_ms": 7.587,
+      "commands_per_second": 2108.83
+    },
+    {
+      "case": "mixed-2",
+      "commands": 16,
+      "wall_ms": 39.511,
+      "commands_per_second": 404.95
+    },
+    {
+      "case": "mixed-2",
+      "commands": 48,
+      "wall_ms": 53.945,
+      "commands_per_second": 889.79
+    },
+    {
+      "case": "mixed-2",
+      "commands": 16,
+      "wall_ms": 7.915,
+      "commands_per_second": 2021.55
+    },
+    {
+      "case": "same-key-race-2",
+      "commands": 32,
+      "wall_ms": 46.34,
+      "commands_per_second": 690.54
+    },
+    {
+      "case": "distinct-3",
+      "commands": 16,
+      "wall_ms": 40.737,
+      "commands_per_second": 392.77
+    },
+    {
+      "case": "distinct-3",
+      "commands": 16,
+      "wall_ms": 7.407,
+      "commands_per_second": 2160.08
+    },
+    {
+      "case": "duplicates-3",
+      "commands": 16,
+      "wall_ms": 39.639,
+      "commands_per_second": 403.64
+    },
+    {
+      "case": "duplicates-3",
+      "commands": 16,
+      "wall_ms": 6.726,
+      "commands_per_second": 2378.74
+    },
+    {
+      "case": "mixed-3",
+      "commands": 16,
+      "wall_ms": 40.019,
+      "commands_per_second": 399.81
+    },
+    {
+      "case": "mixed-3",
+      "commands": 48,
+      "wall_ms": 51.524,
+      "commands_per_second": 931.6
+    },
+    {
+      "case": "mixed-3",
+      "commands": 16,
+      "wall_ms": 7.131,
+      "commands_per_second": 2243.63
+    },
+    {
+      "case": "same-key-race-3",
+      "commands": 32,
+      "wall_ms": 43.392,
+      "commands_per_second": 737.47
+    },
+    {
+      "case": "distinct-4",
+      "commands": 16,
+      "wall_ms": 47.893,
+      "commands_per_second": 334.08
+    },
+    {
+      "case": "distinct-4",
+      "commands": 16,
+      "wall_ms": 7.237,
+      "commands_per_second": 2210.79
+    },
+    {
+      "case": "duplicates-4",
+      "commands": 16,
+      "wall_ms": 37.907,
+      "commands_per_second": 422.08
+    },
+    {
+      "case": "duplicates-4",
+      "commands": 16,
+      "wall_ms": 7.427,
+      "commands_per_second": 2154.43
+    },
+    {
+      "case": "mixed-4",
+      "commands": 16,
+      "wall_ms": 43.198,
+      "commands_per_second": 370.39
+    },
+    {
+      "case": "mixed-4",
+      "commands": 48,
+      "wall_ms": 53.566,
+      "commands_per_second": 896.09
+    },
+    {
+      "case": "mixed-4",
+      "commands": 16,
+      "wall_ms": 7.332,
+      "commands_per_second": 2182.17
+    },
+    {
+      "case": "same-key-race-4",
+      "commands": 32,
+      "wall_ms": 41.984,
+      "commands_per_second": 762.19
+    },
+    {
+      "case": "distinct-5",
+      "commands": 16,
+      "wall_ms": 39.218,
+      "commands_per_second": 407.97
+    },
+    {
+      "case": "distinct-5",
+      "commands": 16,
+      "wall_ms": 7.464,
+      "commands_per_second": 2143.56
+    },
+    {
+      "case": "duplicates-5",
+      "commands": 16,
+      "wall_ms": 37.548,
+      "commands_per_second": 426.13
+    },
+    {
+      "case": "duplicates-5",
+      "commands": 16,
+      "wall_ms": 6.976,
+      "commands_per_second": 2293.47
+    },
+    {
+      "case": "mixed-5",
+      "commands": 16,
+      "wall_ms": 38.794,
+      "commands_per_second": 412.44
+    },
+    {
+      "case": "mixed-5",
+      "commands": 48,
+      "wall_ms": 54.336,
+      "commands_per_second": 883.38
+    },
+    {
+      "case": "mixed-5",
+      "commands": 16,
+      "wall_ms": 6.941,
+      "commands_per_second": 2305.17
+    },
+    {
+      "case": "same-key-race-5",
+      "commands": 32,
+      "wall_ms": 48.399,
+      "commands_per_second": 661.17
+    },
+    {
+      "case": "redundant-cleanup-failure",
+      "commands": 2,
+      "wall_ms": 155.041,
+      "commands_per_second": 12.9
+    }
+  ]
+}
