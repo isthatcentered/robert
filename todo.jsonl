@@ -1,0 +1,6 @@
+{"title":"Command to get the size of the repositories installed","version":2,"status":"backlog","id":6,"description":""}
+{"status":"active","version":2,"title":"import from package.json","id":2,"description":""}
+{"status":"backlog","version":2,"title":"Do we need bubble tea or something","id":5,"description":""}
+{"status":"backlog","version":2,"title":"Interactive tui to search/manage installed","id":4,"description":""}
+{"status":"backlog","version":2,"title":"list --with-context add --with-context","id":3,"description":"Adds a repo with the ref installed \n"}
+{"status":"backlog","version":2,"title":"Handle concurrent add/delete/writes to config","id":1,"description":""}
