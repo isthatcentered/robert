@@ -1,57 +1,79 @@
 package repository
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 type Reference struct {
-	Type   string
-	Value  string
-	fields map[string]json.RawMessage
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
-func (r *Reference) UnmarshalJSON(data []byte) error {
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(data, &fields); err != nil {
-		return err
+func (r Reference) Equal(other Reference) bool {
+	if r.Type != other.Type {
+		return false
 	}
-	if fields == nil {
-		return fmt.Errorf("reference must be an object")
+	if r.Type == "commit" {
+		return strings.EqualFold(r.Value, other.Value)
 	}
-	var known struct {
-		Type  string `json:"type"`
-		Value string `json:"value"`
-	}
-	if err := json.Unmarshal(data, &known); err != nil {
-		return err
-	}
-	*r = Reference{Type: known.Type, Value: known.Value, fields: fields}
-	return nil
+	return r.Value == other.Value
 }
 
-func (r Reference) MarshalJSON() ([]byte, error) {
-	fields := make(map[string]json.RawMessage, len(r.fields)+2)
-	for key, value := range r.fields {
-		fields[key] = value
+var commitID = regexp.MustCompile(`^[0-9a-fA-F]{40}$`)
+
+func (r Reference) Validate() error {
+	switch r.Type {
+	case "commit":
+		if !commitID.MatchString(r.Value) {
+			return fmt.Errorf("commit requires a full 40-character hexadecimal ID")
+		}
+		return nil
+	case "branch", "tag":
+		if validRefName(r.Value) && (r.Type != "branch" || (r.Value != "HEAD" && !strings.HasPrefix(r.Value, "-"))) {
+			return nil
+		}
+		return fmt.Errorf("%s value %q must be a valid nonempty Git reference name", r.Type, r.Value)
+	default:
+		return fmt.Errorf("type %q must be branch, tag, or commit", r.Type)
 	}
-	kind, err := json.Marshal(r.Type)
-	if err != nil {
-		return nil, err
-	}
-	value, err := json.Marshal(r.Value)
-	if err != nil {
-		return nil, err
-	}
-	fields["type"] = kind
-	fields["value"] = value
-	return json.Marshal(fields)
 }
 
-func (r Reference) Equal(other Reference) bool { return r.Type == other.Type && r.Value == other.Value }
+func validRefName(value string) bool {
+	if value == "" || strings.HasSuffix(value, ".") || strings.Contains(value, "..") || strings.Contains(value, "@{") {
+		return false
+	}
+	for _, char := range value {
+		if char <= ' ' || char == 127 || strings.ContainsRune("~^:?*[\\", char) {
+			return false
+		}
+	}
+	for _, part := range strings.Split(value, "/") {
+		if part == "" || strings.HasPrefix(part, ".") || strings.HasSuffix(part, ".lock") {
+			return false
+		}
+	}
+	return true
+}
+
+// SearchPath returns the repository namespace and name, without its transport or host.
+// Callers pass remote URLs already validated by NormalizeURL.
+func SearchPath(remote string) string {
+	var path string
+	if scpRemote.MatchString(remote) {
+		_, path, _ = strings.Cut(remote, ":")
+	} else {
+		parsed, err := url.Parse(remote)
+		if err != nil {
+			return ""
+		}
+		path = parsed.Path
+	}
+	return strings.TrimSuffix(strings.Trim(path, "/"), ".git")
+}
 
 var shorthand = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
 var scpRemote = regexp.MustCompile(`^[^@/:\s]+@[^@/:\s]+:.+$`)
@@ -64,12 +86,17 @@ func NormalizeURL(input string) (string, error) {
 		}
 		return "https://github.com/" + input + ".git", nil
 	}
-	if scpRemote.MatchString(input) {
+	if scpRemote.MatchString(input) && validRemotePath(strings.SplitN(input, ":", 2)[1]) {
 		return input, nil
 	}
 	parsed, err := url.Parse(input)
-	if err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https" || parsed.Scheme == "ssh" || parsed.Scheme == "git") && parsed.Host != "" && parsed.Path != "" && parsed.Path != "/" {
+	if err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https" || parsed.Scheme == "ssh" || parsed.Scheme == "git") && parsed.Hostname() != "" && validRemotePath(parsed.Path) {
 		return input, nil
 	}
 	return "", fmt.Errorf("invalid repository %q: expected owner/repo or an HTTP(S), ssh, git, or scp-style SSH remote URL", input)
+}
+
+func validRemotePath(path string) bool {
+	path = strings.Trim(path, "/")
+	return path != "" && path != ".git" && path != "." && path != ".." && !strings.ContainsRune(path, 0) && strings.IndexFunc(path, unicode.IsControl) == -1
 }

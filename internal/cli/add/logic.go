@@ -28,7 +28,7 @@ type Result struct {
 func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 	doc, _, err := l.Config.Load()
 	if err != nil {
-		return Result{}, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error()})
+		return Result{}, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error(), "hint": "check file permissions and correct the reported configuration fields before retrying"})
 	}
 	ref := selection.Reference
 	if ref == nil {

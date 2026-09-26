@@ -18,7 +18,7 @@ The current configuration store hides file access, but CLI commands still search
 - Parse accepted repository input forms into a domain Repository value through the catalogue module.
 - Provide a filesystem adapter for the live CLI and a memory adapter for tests, with shared domain rules.
 - Keep Git operations and checkout creation/deletion in the command workflows.
-- Preserve the lifecycle described in ADR 0001, including missing-configuration behavior and unknown saved fields. The glossary now calls the saved installation collection the catalogue; the existing on-disk schema and CLI wording are not renamed by this decision.
+- Preserve the lifecycle described in ADR 0001, including missing-configuration behavior. Unknown saved fields are ignored and dropped on subsequent writes, per ADR 0003. The glossary now calls the saved installation collection the catalogue; the existing on-disk schema and CLI wording are not renamed by this decision.
 
 ## Repository identity
 
@@ -28,14 +28,13 @@ Expand accepted owner/repo shorthand into its GitHub HTTPS URL, then compare URL
 
 Register rejects an installation when the catalogue already contains the same repository URL and reference type/value. It returns a typed error containing the existing installation and leaves the catalogue unchanged. It does not replace the saved installation or report successful reuse.
 
-The caller can use the existing installation in the error to handle an unused checkout. Coordination between concurrent callers and the CLI response to this conflict remain to be specified.
+The caller can use the existing installation in the error to handle an unused checkout. Coordination between concurrent callers remains to be specified. ADR 0003 retains the CLI's successful `already_added` response and leaves locking out of scope for now.
 
 ## Open decisions
 
 - Concurrent operations and the consistency guarantees of mutations.
 - CLI handling and checkout cleanup after a duplicate registration conflict.
-- Domain value validation and treatment of malformed saved entries.
-- Representation of unknown saved metadata and generation of command output.
+- Placement of the shared field validation from ADR 0003 in the future catalogue module.
 - Error types and translation into existing CLI errors.
 - Adapter composition, shared rules, and contract testing.
 

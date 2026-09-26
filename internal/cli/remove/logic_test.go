@@ -21,17 +21,14 @@ func TestRemoveSucceedsAfterSaveWhenCheckoutDeletionFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(result["status"]) != `"removed"` {
-		t.Fatalf("status = %s", result["status"])
+	if result.Status != "removed" {
+		t.Fatalf("status = %s", result.Status)
 	}
 	if len(store.doc.Repositories) != 0 {
 		t.Fatalf("entry was retained: %v", store.doc.Repositories)
 	}
 	if !dirs.called || !dirs.sawSaved {
 		t.Fatal("directory deletion did not happen after configuration save")
-	}
-	if _, exists := result["cleanupError"]; exists {
-		t.Fatal("cleanup failure appeared in successful result")
 	}
 }
 

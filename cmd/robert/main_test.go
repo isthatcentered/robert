@@ -12,7 +12,7 @@ import (
 )
 
 func TestFlagErrorsReturnJSON(t *testing.T) {
-	for _, name := range []string{"add", "remove"} {
+	for _, name := range []string{"add", "remove", "list"} {
 		t.Run(name, func(t *testing.T) {
 			for _, flags := range [][]string{
 				{"--unknown"},
@@ -20,7 +20,11 @@ func TestFlagErrorsReturnJSON(t *testing.T) {
 				{"--branch", "main", "--tag", "v1"},
 				{"--branch", "main", "--branch", "main"},
 			} {
-				args := append([]string{name, "owner/repo"}, flags...)
+				args := []string{name}
+				if name != "list" {
+					args = append(args, "owner/repo")
+				}
+				args = append(args, flags...)
 				result := command(t, 1, args...)
 				if stringField(t, result, "error") == "" {
 					t.Fatal("missing error message")
@@ -134,16 +138,19 @@ func TestAddAndRemoveWithLocalGitRemote(t *testing.T) {
 	removed := command(t, 0, "remove", remote, "--branch", "main")
 	assertField(t, removed, "status", "removed")
 	assertField(t, removed, "path", mainPath)
-	assertField(t, removed, "note", "saved field")
-	if removed["reference"].(map[string]any)["source"] != "saved reference field" {
-		t.Fatal("unknown reference field was lost from removal output")
+	if _, exists := removed["note"]; exists {
+		t.Fatal("unknown entry field was retained in removal output")
+	}
+	if _, exists := removed["reference"].(map[string]any)["source"]; exists {
+		t.Fatal("unknown reference field was retained in removal output")
 	}
 	if stringField(t, removed, "addedAt") == "" {
 		t.Fatal("missing saved addedAt")
 	}
+	doc = nil
 	readJSON(t, configPath, &doc)
-	if doc["custom"] != "keep" {
-		t.Fatal("unknown configuration field was lost")
+	if _, exists := doc["custom"]; exists {
+		t.Fatal("unknown configuration field was retained")
 	}
 	if len(doc["repositories"].([]any)) != 3 {
 		t.Fatalf("remaining repositories = %v", doc["repositories"])
@@ -193,7 +200,11 @@ func TestRemoveRejectsRelativeSavedPathWithoutChangingConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	response := command(t, 1, "remove", "https://example.invalid/demo.git")
-	assertField(t, response, "error", "saved checkout path must be a nonempty absolute path")
+	assertField(t, response, "error", "failed to read configuration")
+	failureContext := response["context"].(map[string]any)
+	if !strings.Contains(stringField(t, failureContext, "cause"), "repositories[0]") || !strings.Contains(stringField(t, failureContext, "cause"), "absolute checkout path") {
+		t.Fatalf("missing invalid entry context: %v", failureContext)
+	}
 	after, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatal(err)

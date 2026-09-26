@@ -1,7 +1,6 @@
 package remove
 
 import (
-	"encoding/json"
 	"path/filepath"
 
 	"github.com/isthatcentered/robert/internal/cli/config"
@@ -15,10 +14,15 @@ type Logic struct {
 	ConfigPath string
 }
 
-func (l Logic) Remove(selection Selection) (map[string]json.RawMessage, error) {
+type Result struct {
+	Status string `json:"status"`
+	config.Entry
+}
+
+func (l Logic) Remove(selection Selection) (*Result, error) {
 	doc, exists, err := l.Config.Load()
 	if err != nil {
-		return nil, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error()})
+		return nil, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error(), "hint": "check file permissions and correct the reported configuration fields before retrying"})
 	}
 	if !exists {
 		return nil, problem.New("configuration does not exist", map[string]any{"path": l.ConfigPath, "url": selection.URL, "hint": "add a repository before removing one"})
@@ -55,10 +59,6 @@ func (l Logic) Remove(selection Selection) (map[string]json.RawMessage, error) {
 	if entry.Path == "" || !filepath.IsAbs(entry.Path) {
 		return nil, problem.New("saved checkout path must be a nonempty absolute path", map[string]any{"url": entry.URL, "path": entry.Path, "configPath": l.ConfigPath})
 	}
-	result, err := entry.Result("removed")
-	if err != nil {
-		return nil, problem.New("failed to encode removed repository details", map[string]any{"url": entry.URL, "cause": err.Error()})
-	}
 	updated := make([]config.Entry, 0, len(doc.Repositories)-1)
 	updated = append(updated, doc.Repositories[:index]...)
 	updated = append(updated, doc.Repositories[index+1:]...)
@@ -67,5 +67,5 @@ func (l Logic) Remove(selection Selection) (map[string]json.RawMessage, error) {
 		return nil, problem.New("failed to save configuration before removing checkout", map[string]any{"path": l.ConfigPath, "url": entry.URL, "checkoutPath": entry.Path, "cause": err.Error()})
 	}
 	_ = l.Dirs.Remove(entry.Path)
-	return result, nil
+	return &Result{Status: "removed", Entry: entry}, nil
 }

@@ -9,11 +9,12 @@ import (
 
 	"github.com/isthatcentered/robert/internal/cli/add"
 	"github.com/isthatcentered/robert/internal/cli/config"
+	"github.com/isthatcentered/robert/internal/cli/list"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/remove"
 )
 
-const usage = "robert <add|remove> <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
+const usage = "robert <add|remove> <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]\n" + list.Usage
 
 func main() {
 	os.Exit(run(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
@@ -26,7 +27,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if args[0] == "-h" || args[0] == "--help" {
 		return writeResult(stdout, stderr, map[string]string{"usage": usage})
 	}
-	if args[0] != "add" && args[0] != "remove" {
+	if args[0] != "add" && args[0] != "remove" && args[0] != "list" {
 		return writeError(stderr, problem.New("unknown command", map[string]any{"command": args[0], "usage": usage}))
 	}
 	home, err := os.UserHomeDir()
@@ -36,12 +37,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	path := filepath.Join(home, ".robert")
 	store := config.Store{Path: path, Home: home}
 	var result any
-	if args[0] == "add" {
+	switch args[0] {
+	case "add":
 		logic := add.Logic{Config: store, Git: add.GitCLI{}, Dirs: add.Directory{}, ConfigPath: path}
 		result, err = add.Handle(ctx, args[1:], logic)
-	} else {
+	case "remove":
 		logic := remove.Logic{Config: store, Dirs: remove.Directory{}, ConfigPath: path}
 		result, err = remove.Handle(args[1:], logic)
+	case "list":
+		logic := list.Logic{Config: store, ConfigPath: path}
+		result, err = list.Handle(args[1:], logic)
 	}
 	if err != nil {
 		return writeError(stderr, err)

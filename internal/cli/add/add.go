@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -32,8 +31,6 @@ type Selection struct {
 	Help      bool
 }
 
-var commitID = regexp.MustCompile(`^[0-9a-fA-F]{40}$`)
-
 func parseArgs(args []string) (Selection, error) {
 	if slices.Contains(args, "-h") || slices.Contains(args, "--help") {
 		return Selection{Help: true}, nil
@@ -56,13 +53,14 @@ func parseArgs(args []string) (Selection, error) {
 			if value == "" || strings.HasPrefix(value, "--") {
 				return fmt.Errorf("--%s requires a nonempty value", kind)
 			}
-			if kind == "commit" {
-				if !commitID.MatchString(value) {
-					return fmt.Errorf("--commit requires a full 40-character hexadecimal ID")
-				}
-				value = strings.ToLower(value)
+			ref := repository.Reference{Type: kind, Value: value}
+			if err := ref.Validate(); err != nil {
+				return err
 			}
-			result.Reference = &repository.Reference{Type: kind, Value: value}
+			if kind == "commit" {
+				ref.Value = strings.ToLower(value)
+			}
+			result.Reference = &ref
 			return nil
 		})
 	}

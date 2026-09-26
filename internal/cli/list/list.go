@@ -1,4 +1,4 @@
-package remove
+package list
 
 import (
 	"flag"
@@ -11,7 +11,13 @@ import (
 	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
-const Usage = "robert remove <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
+const Usage = "robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
+
+type Selection struct {
+	Search    string
+	Reference *repository.Reference
+	Help      bool
+}
 
 func Handle(args []string, logic Logic) (any, error) {
 	selection, err := parseArgs(args)
@@ -21,31 +27,30 @@ func Handle(args []string, logic Logic) (any, error) {
 	if selection.Help {
 		return map[string]string{"usage": Usage}, nil
 	}
-	return logic.Remove(selection)
-}
-
-type Selection struct {
-	URL       string
-	Reference *repository.Reference
-	Help      bool
+	return logic.List(selection)
 }
 
 func parseArgs(args []string) (Selection, error) {
 	if slices.Contains(args, "-h") || slices.Contains(args, "--help") {
 		return Selection{Help: true}, nil
 	}
-	if len(args) == 0 {
-		return Selection{}, fmt.Errorf("repository is required")
-	}
-	url, err := repository.NormalizeURL(args[0])
-	if err != nil {
-		return Selection{}, err
-	}
-	result := Selection{URL: url}
-	flags := flag.NewFlagSet("remove", flag.ContinueOnError)
+	var result Selection
+	flags := flag.NewFlagSet("list", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
+	searchSet := false
+	flags.Func("search", "search the repository namespace and name", func(value string) error {
+		if searchSet {
+			return fmt.Errorf("--search cannot be repeated")
+		}
+		if strings.HasPrefix(value, "--") {
+			return fmt.Errorf("--search requires a value; use --search= for an empty search")
+		}
+		searchSet = true
+		result.Search = strings.TrimSpace(value)
+		return nil
+	})
 	for _, kind := range []string{"branch", "tag", "commit"} {
-		flags.Func(kind, "select a repository "+kind, func(value string) error {
+		flags.Func(kind, "filter by exact repository "+kind, func(value string) error {
 			if result.Reference != nil {
 				return fmt.Errorf("select only one reference; flags cannot be repeated or combined")
 			}
@@ -63,11 +68,11 @@ func parseArgs(args []string) (Selection, error) {
 			return nil
 		})
 	}
-	if err := flags.Parse(args[1:]); err != nil {
+	if err := flags.Parse(args); err != nil {
 		return Selection{}, err
 	}
 	if flags.NArg() != 0 {
-		return Selection{}, fmt.Errorf("unexpected argument %q: use --branch, --tag, or --commit", flags.Arg(0))
+		return Selection{}, fmt.Errorf("unexpected argument %q: use --search, --branch, --tag, or --commit", flags.Arg(0))
 	}
 	return result, nil
 }

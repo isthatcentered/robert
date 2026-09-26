@@ -11,7 +11,7 @@ Robert saves installations in a configuration file and places each checkout in i
 ## Decision
 
 - The removal command is `remove`.
-- A successful `remove` returns JSON with `status: "removed"` and the saved installation fields, including `addedAt` and any other fields in that entry.
+- A successful `remove` returns JSON with `status: "removed"` and the known saved installation fields, including `addedAt`. Unknown-field preservation was superseded by ADR 0003.
 - The CLI performs these operations directly for now. A future daemon may take ownership of them.
 - On the first successful `add`, Robert creates the configuration file after installing the checkout. If installation fails, Robert does not create the configuration file.
 - An unflagged `add` resolves the remote's current default branch. If that branch differs from the reference in an existing installation, it creates a separate installation.
