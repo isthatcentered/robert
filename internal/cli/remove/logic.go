@@ -25,7 +25,7 @@ func (l Logic) Remove(selection arguments.Selection) (map[string]json.RawMessage
 		return nil, problem.New("configuration does not exist", map[string]any{"path": l.ConfigPath, "url": selection.URL, "hint": "add a repository before removing one"})
 	}
 	index := -1
-	var matches []config.Entry
+	var references []repository.Reference
 	for i, entry := range doc.Repositories {
 		if entry.URL != selection.URL {
 			continue
@@ -36,13 +36,9 @@ func (l Logic) Remove(selection arguments.Selection) (map[string]json.RawMessage
 		if index == -1 {
 			index = i
 		}
-		matches = append(matches, entry)
+		references = append(references, entry.Reference)
 	}
-	if len(matches) > 1 {
-		references := make([]repository.Reference, 0, len(matches))
-		for _, entry := range matches {
-			references = append(references, entry.Reference)
-		}
+	if len(references) > 1 {
 		context := map[string]any{"url": selection.URL, "matchingReferences": references}
 		if selection.Reference != nil {
 			return nil, problem.New("multiple identical installations match; remove duplicate entries from configuration", context)

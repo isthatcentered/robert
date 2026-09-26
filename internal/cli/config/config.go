@@ -39,6 +39,14 @@ func (e *Entry) UnmarshalJSON(data []byte) error {
 }
 
 func (e Entry) MarshalJSON() ([]byte, error) {
+	fields, err := e.jsonFields()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(fields)
+}
+
+func (e Entry) jsonFields() (map[string]json.RawMessage, error) {
 	fields := clone(e.fields)
 	if err := set(fields, "url", e.URL); err != nil {
 		return nil, err
@@ -52,17 +60,12 @@ func (e Entry) MarshalJSON() ([]byte, error) {
 	if err := set(fields, "addedAt", e.AddedAt); err != nil {
 		return nil, err
 	}
-	return json.Marshal(fields)
+	return fields, nil
 }
 
-// Result returns all saved entry fields plus the command result status.
 func (e Entry) Result(status string) (map[string]json.RawMessage, error) {
-	encoded, err := json.Marshal(e)
+	fields, err := e.jsonFields()
 	if err != nil {
-		return nil, err
-	}
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(encoded, &fields); err != nil {
 		return nil, err
 	}
 	if err := set(fields, "status", status); err != nil {
