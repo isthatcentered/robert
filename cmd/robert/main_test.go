@@ -11,6 +11,29 @@ import (
 	"testing"
 )
 
+func TestFlagErrorsReturnJSON(t *testing.T) {
+	for _, name := range []string{"add", "remove"} {
+		t.Run(name, func(t *testing.T) {
+			for _, flags := range [][]string{
+				{"--unknown"},
+				{"--branch"},
+				{"--branch", "main", "--tag", "v1"},
+				{"--branch", "main", "--branch", "main"},
+			} {
+				args := append([]string{name, "owner/repo"}, flags...)
+				result := command(t, 1, args...)
+				if stringField(t, result, "error") == "" {
+					t.Fatal("missing error message")
+				}
+				context, ok := result["context"].(map[string]any)
+				if !ok || !strings.HasPrefix(stringField(t, context, "usage"), "robert "+name+" ") {
+					t.Fatalf("missing command usage: %v", result)
+				}
+			}
+		})
+	}
+}
+
 func TestAddAndRemoveWithLocalGitRemote(t *testing.T) {
 	root := t.TempDir()
 	home := filepath.Join(root, "home")

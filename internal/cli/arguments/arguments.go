@@ -1,8 +1,11 @@
 package arguments
 
 import (
+	"flag"
 	"fmt"
+	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/isthatcentered/robert/internal/cli/repository"
@@ -17,10 +20,8 @@ type Selection struct {
 var commitID = regexp.MustCompile(`^[0-9a-fA-F]{40}$`)
 
 func Parse(args []string) (Selection, error) {
-	for _, arg := range args {
-		if arg == "-h" || arg == "--help" {
-			return Selection{Help: true}, nil
-		}
+	if slices.Contains(args, "-h") || slices.Contains(args, "--help") {
+		return Selection{Help: true}, nil
 	}
 	if len(args) == 0 {
 		return Selection{}, fmt.Errorf("repository is required")
@@ -30,32 +31,31 @@ func Parse(args []string) (Selection, error) {
 		return Selection{}, err
 	}
 	result := Selection{URL: url}
-	for i := 1; i < len(args); i++ {
-		flag, value, hasEquals := strings.Cut(args[i], "=")
-		kind := strings.TrimPrefix(flag, "--")
-		if flag != "--branch" && flag != "--tag" && flag != "--commit" {
-			return Selection{}, fmt.Errorf("unexpected argument %q: use --branch, --tag, or --commit", args[i])
-		}
-		if result.Reference != nil {
-			return Selection{}, fmt.Errorf("select only one reference; flags cannot be repeated or combined")
-		}
-		if !hasEquals {
-			i++
-			if i >= len(args) {
-				return Selection{}, fmt.Errorf("%s requires a value", flag)
+	flags := flag.NewFlagSet("repository", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	for _, kind := range []string{"branch", "tag", "commit"} {
+		flags.Func(kind, "select a repository "+kind, func(value string) error {
+			if result.Reference != nil {
+				return fmt.Errorf("select only one reference; flags cannot be repeated or combined")
 			}
-			value = args[i]
-		}
-		if value == "" || strings.HasPrefix(value, "--") {
-			return Selection{}, fmt.Errorf("%s requires a nonempty value", flag)
-		}
-		if kind == "commit" {
-			if !commitID.MatchString(value) {
-				return Selection{}, fmt.Errorf("--commit requires a full 40-character hexadecimal ID")
+			if value == "" || strings.HasPrefix(value, "--") {
+				return fmt.Errorf("--%s requires a nonempty value", kind)
 			}
-			value = strings.ToLower(value)
-		}
-		result.Reference = &repository.Reference{Type: kind, Value: value}
+			if kind == "commit" {
+				if !commitID.MatchString(value) {
+					return fmt.Errorf("--commit requires a full 40-character hexadecimal ID")
+				}
+				value = strings.ToLower(value)
+			}
+			result.Reference = &repository.Reference{Type: kind, Value: value}
+			return nil
+		})
+	}
+	if err := flags.Parse(args[1:]); err != nil {
+		return Selection{}, err
+	}
+	if flags.NArg() != 0 {
+		return Selection{}, fmt.Errorf("unexpected argument %q: use --branch, --tag, or --commit", flags.Arg(0))
 	}
 	return result, nil
 }
