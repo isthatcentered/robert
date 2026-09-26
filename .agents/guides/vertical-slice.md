@@ -8,11 +8,10 @@ Organize the CLI and daemon by operation so the code for `add`, `remove`, `list`
 
 ```text
 cmd/
-  robert/main.go                 # CLI executable
+  robert/main.go                 # CLI executable, construct dependencies and dispatch commands
   robertd/main.go                # daemon executable
 internal/
   cli/
-    cli.go                      # construct dependencies and dispatch commands
     add/
       add.go                    # command handler
       logic.go                  # CLI workflow
@@ -33,7 +32,7 @@ internal/
     run/
 ```
 
-Each slice is a separate Go package. Its named file (`add.go`, `run.go`, etc.) is the entry point for that operation. Go imports the **package**, not that file: `internal/cli/cli.go` imports CLI slices, and `internal/daemon/daemon.go` imports daemon slices. Each `cmd/*/main.go` only calls its corresponding `cli.Run` or `daemon.Run`.
+Each slice is a separate Go package. Its named file (`add.go`, `run.go`, etc.) is the entry point for that operation. Go imports the **package**, not that file: `cmd/robert/main.go` constructs CLI dependencies and imports CLI slices directly. `internal/daemon/daemon.go` imports daemon slices, and `cmd/robertd/main.go` calls `daemon.Run`.
 
 ## Example: daemon `add`
 

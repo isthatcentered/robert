@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"bytes"
@@ -183,7 +183,7 @@ func TestRemoveRejectsRelativeSavedPathWithoutChangingConfig(t *testing.T) {
 func command(t *testing.T, expectedCode int, args ...string) map[string]any {
 	t.Helper()
 	var stdout, stderr bytes.Buffer
-	code := Run(context.Background(), args, &stdout, &stderr)
+	code := run(context.Background(), args, &stdout, &stderr)
 	if code != expectedCode {
 		t.Fatalf("robert %v exited %d, want %d; stdout=%s stderr=%s", args, code, expectedCode, stdout.String(), stderr.String())
 	}
