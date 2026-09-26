@@ -1,9 +1,12 @@
-{"version":2,"description":"","status":"active","title":"Remove command","id":9}
-{"version":2,"description":"","id":8,"title":"Add command","status":"active"}
-{"id":2,"description":"","status":"backlog","title":"import from package.json","version":2}
-{"version":2,"description":"","status":"backlog","title":"Having the daemon allows us to keep track of what was last acceced and when for pruning","id":7}
-{"id":6,"description":"","title":"Command to get the size of the repositories installed","status":"backlog","version":2}
-{"id":5,"description":"","status":"backlog","title":"Do we need bubble tea or something","version":2}
-{"id":4,"description":"","status":"backlog","title":"Interactive tui to search/manage installed","version":2}
-{"id":3,"description":"Adds a repo with the ref installed \n","status":"backlog","title":"list --with-context add --with-context","version":2}
-{"id":1,"description":"","status":"backlog","title":"Handle concurrent add/delete/writes to config","version":2}
+{"version":2,"title":"Catalogue abstraction to ensure writing/reading the config alwasy follows the same rules ?","description":"","id":12,"status":"active"}
+{"version":2,"title":"File lock R/W","description":"","id":11,"status":"active"}
+{"version":2,"title":"List command","description":"","id":10,"status":"active"}
+{"version":2,"title":"Add command","description":"","id":8,"status":"done"}
+{"version":2,"title":"Remove command","description":"","id":9,"status":"done"}
+{"id":2,"title":"import from package.json","description":"","version":2,"status":"backlog"}
+{"version":2,"title":"Having the daemon allows us to keep track of what was last acceced and when for pruning","description":"","id":7,"status":"backlog"}
+{"id":6,"title":"Command to get the size of the repositories installed","description":"","version":2,"status":"backlog"}
+{"id":5,"title":"Do we need bubble tea or something","description":"","version":2,"status":"backlog"}
+{"id":4,"title":"Interactive tui to search/manage installed","description":"","version":2,"status":"backlog"}
+{"id":3,"title":"list --with-context add --with-context","description":"Adds a repo with the ref installed \n","version":2,"status":"backlog"}
+{"id":1,"title":"Handle concurrent add/delete/writes to config","description":"","version":2,"status":"backlog"}
