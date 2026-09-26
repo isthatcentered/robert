@@ -43,7 +43,13 @@ type failingStore struct {
 }
 
 func (s *failingStore) Read() (catalog.Document, error) { return s.doc, nil }
-func (s *failingStore) Write(catalog.Document) error    { return s.saveErr }
+func (s *failingStore) Update(change func(*catalog.Document) error) error {
+	doc := s.doc
+	if err := change(&doc); err != nil {
+		return err
+	}
+	return s.saveErr
+}
 
 type successfulGit struct{}
 

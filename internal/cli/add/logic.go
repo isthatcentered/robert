@@ -2,6 +2,7 @@ package add
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -39,7 +40,7 @@ func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 	}
 	for _, entry := range doc.Repositories {
 		if entry.URL == selection.URL && repository.Reference(entry.Reference).Equal(*ref) {
-			return Result{Status: "already_added", URL: entry.URL, Reference: repository.Reference(entry.Reference), Path: entry.Path}, nil
+			return addedResult(entry), nil
 		}
 	}
 	path, err := l.Dirs.Create(doc.InstallDir)
@@ -58,15 +59,37 @@ func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 		now = l.Now
 	}
 	entry := catalog.Entry{URL: selection.URL, Path: path, Reference: catalog.Reference(*ref), AddedAt: now().UTC().Format(time.RFC3339Nano)}
-	doc.Repositories = append(doc.Repositories, entry)
-	if err := l.Catalog.Write(doc); err != nil {
+	redundant := false
+	err = l.Catalog.Update(func(latest *catalog.Document) error {
+		for _, saved := range latest.Repositories {
+			if saved.URL == selection.URL && repository.Reference(saved.Reference).Equal(*ref) {
+				entry = saved
+				redundant = true
+				return nil
+			}
+		}
+		latest.Repositories = append(latest.Repositories, entry)
+		return nil
+	})
+	if err != nil {
 		context := map[string]any{"url": selection.URL, "reference": ref, "path": path}
+		var storage *catalog.StorageError
+		if errors.As(err, &storage) && storage.Committed {
+			return Result{}, problem.Wrap("configuration saved but failed to finish catalogue update", err, context)
+		}
 		if cleanupErr := l.Dirs.Remove(path); cleanupErr != nil {
 			context["cleanupError"] = cleanupErr.Error()
 		}
 		return Result{}, problem.Wrap("failed to save configuration after cloning repository", err, context)
 	}
-	return Result{Status: "added", URL: entry.URL, Reference: repository.Reference(entry.Reference), Path: entry.Path}, nil
+	if redundant {
+		_ = l.Dirs.Remove(path)
+	}
+	return addedResult(entry), nil
+}
+
+func addedResult(entry catalog.Entry) Result {
+	return Result{Status: "added", URL: entry.URL, Reference: repository.Reference(entry.Reference), Path: entry.Path}
 }
 
 func gitContext(url, path string, err error) map[string]any {

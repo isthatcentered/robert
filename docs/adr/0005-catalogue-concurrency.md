@@ -1,6 +1,6 @@
 # Catalogue concurrency
 
-Status: Accepted. Implementation pending.
+Status: Accepted and implemented.
 
 ## Context
 
@@ -108,6 +108,11 @@ Verify the implementation with both goroutines and independent processes:
 Run the project suite and race checks, and exercise file-lock behavior on both
 Linux and macOS. Cross-compilation alone does not verify macOS lock semantics.
 Automatic cleanup of abandoned checkout directories is separate work.
+
+Implementation verification: the full test suite (including independent-process
+concurrency tests), race detector, and `go vet` pass on Linux. Production code
+cross-compiles for macOS on both amd64 and arm64. macOS runtime lock tests have
+not been run in the Linux development workspace.
 
 ## References
 

@@ -31,9 +31,20 @@ func AsError(err error) *Error {
 			pathKey = "configPath"
 			hint = "check the configuration directory exists, is writable, and has free space before retrying"
 		}
-		return &Error{Message: "failed to " + storage.Operation + " configuration", Context: map[string]any{
+		if storage.LockPath != "" {
+			hint = "check that the lock file's directory exists and that you have permission to access the lock file"
+		}
+		context := map[string]any{
 			pathKey: storage.Path, "cause": storage.Cause.Error(), "hint": hint,
-		}}
+		}
+		if storage.LockPath != "" {
+			context["lockPath"] = storage.LockPath
+		}
+		if storage.Committed {
+			context["committed"] = true
+			context["hint"] = "the catalogue update was saved; use list to inspect the saved installations before retrying"
+		}
+		return &Error{Message: "failed to " + storage.Operation + " configuration", Context: context}
 	}
 	return &Error{Message: err.Error()}
 }

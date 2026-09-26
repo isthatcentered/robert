@@ -218,7 +218,7 @@ func listCommand(t *testing.T, flags ...string) []map[string]any {
 
 func writeCatalog(t *testing.T, path string, doc catalog.Document) {
 	t.Helper()
-	if err := (catalog.JSONFileCatalog{Path: path}).Write(doc); err != nil {
+	if err := (catalog.JSONFileCatalog{Path: path}).Update(func(latest *catalog.Document) error { *latest = doc; return nil }); err != nil {
 		t.Fatal(err)
 	}
 }

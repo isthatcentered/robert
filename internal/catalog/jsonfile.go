@@ -2,9 +2,12 @@ package catalog
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/gofrs/flock"
 )
 
 // JSONFileCatalog owns the on-disk format and configuration defaults.
@@ -37,7 +40,61 @@ type jsonReference struct {
 	Value string `json:"value"`
 }
 
-func (s JSONFileCatalog) Read() (Document, error) {
+func (s JSONFileCatalog) Read() (doc Document, err error) {
+	lock, err := s.lock(true)
+	if err != nil {
+		return Document{}, err
+	}
+	defer func() { err = errors.Join(err, s.unlock(lock, false)) }()
+	return s.read()
+}
+
+func (s JSONFileCatalog) Update(change func(*Document) error) (err error) {
+	lock, err := s.lock(false)
+	if err != nil {
+		return err
+	}
+	committed := false
+	defer func() { err = errors.Join(err, s.unlock(lock, committed)) }()
+	doc, err := s.read()
+	if err != nil {
+		return err
+	}
+	if err := change(&doc); err != nil {
+		return err
+	}
+	if err := s.save(doc); err != nil {
+		return err
+	}
+	committed = true
+	return nil
+}
+
+func (s JSONFileCatalog) lock(shared bool) (*flock.Flock, error) {
+	// Each operation owns a separate handle. Reusing a Flock would allow a
+	// second acquisition to short-circuit and an early unlock to release it.
+	// The companion file survives replacement of the JSON file by rename.
+	lock := flock.New(s.Path + ".lock")
+	var err error
+	if shared {
+		err = lock.RLock()
+	} else {
+		err = lock.Lock()
+	}
+	if err != nil {
+		return nil, &StorageError{Operation: "lock", Path: s.Path, LockPath: lock.Path(), Cause: err}
+	}
+	return lock, nil
+}
+
+func (s JSONFileCatalog) unlock(lock *flock.Flock, committed bool) error {
+	if err := lock.Unlock(); err != nil {
+		return &StorageError{Operation: "unlock", Path: s.Path, LockPath: lock.Path(), Committed: committed, Cause: err}
+	}
+	return nil
+}
+
+func (s JSONFileCatalog) read() (Document, error) {
 	data, err := os.ReadFile(s.Path)
 	if os.IsNotExist(err) {
 		return Document{Version: 1, InstallDir: filepath.Join(s.Home, ".agents", "robert"), Repositories: []Entry{}}, nil
@@ -59,7 +116,7 @@ func (s JSONFileCatalog) Read() (Document, error) {
 	return doc, nil
 }
 
-func (s JSONFileCatalog) Write(doc Document) error {
+func (s JSONFileCatalog) save(doc Document) error {
 	saved := jsonDocument{Version: doc.Version, InstallDir: doc.InstallDir}
 	if doc.Repositories != nil {
 		saved.Repositories = make([]jsonEntry, len(doc.Repositories))

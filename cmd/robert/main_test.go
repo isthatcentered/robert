@@ -100,7 +100,7 @@ func TestAddAndRemoveWithLocalGitRemote(t *testing.T) {
 		t.Fatal(err)
 	}
 	already := command(t, 0, "add", remote)
-	assertField(t, already, "status", "already_added")
+	assertField(t, already, "status", "added")
 	assertField(t, already, "path", mainPath)
 	after, err := os.ReadFile(configPath)
 	if err != nil {
@@ -307,5 +307,24 @@ func TestRemoveFromMissingCatalogueDoesNotCreateFile(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(home, ".robert")); !os.IsNotExist(err) {
 		t.Fatalf("remove created a catalogue: %v", err)
+	}
+}
+
+func TestAllCommandsReportLockFailuresWithStorageContext(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	lockPath := filepath.Join(home, ".robert.lock")
+	if err := os.Mkdir(lockPath, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for _, args := range [][]string{{"list"}, {"add", "owner/repo", "--branch", "main"}, {"remove", "owner/repo"}} {
+		result := command(t, 1, args...)
+		assertField(t, result, "error", "failed to lock configuration")
+		failure := result["context"].(map[string]any)
+		assertField(t, failure, "path", filepath.Join(home, ".robert"))
+		assertField(t, failure, "lockPath", lockPath)
+		if stringField(t, failure, "cause") == "" || stringField(t, failure, "hint") == "" {
+			t.Fatalf("missing actionable lock failure context: %v", failure)
+		}
 	}
 }

@@ -17,7 +17,7 @@ func validDocument(home string) Document {
 	return doc
 }
 
-func TestSavedFieldsAreTrustedOnReadAndWrite(t *testing.T) {
+func TestSavedFieldsAreTrustedOnReadAndUpdate(t *testing.T) {
 	cases := []struct {
 		name   string
 		change func(*Document)
@@ -45,12 +45,12 @@ func TestSavedFieldsAreTrustedOnReadAndWrite(t *testing.T) {
 			home := t.TempDir()
 			store := JSONFileCatalog{Home: home, Path: filepath.Join(home, ".robert")}
 			doc := validDocument(home)
-			if err := store.Write(doc); err != nil {
+			if err := store.Update(func(latest *Document) error { *latest = doc; return nil }); err != nil {
 				t.Fatal(err)
 			}
 			tc.change(&doc)
-			if err := store.Write(doc); err != nil {
-				t.Fatalf("Write rejected authoritative configuration: %v", err)
+			if err := store.Update(func(latest *Document) error { *latest = doc; return nil }); err != nil {
+				t.Fatalf("Update rejected authoritative configuration: %v", err)
 			}
 			loaded, err := store.Read()
 			if err != nil || !reflect.DeepEqual(loaded, doc) {
@@ -78,7 +78,7 @@ func TestReadReportsJSONDecodingErrors(t *testing.T) {
 	}
 }
 
-func TestUnknownFieldsAreIgnoredAndDroppedOnWrite(t *testing.T) {
+func TestUnknownFieldsAreIgnoredAndDroppedOnUpdate(t *testing.T) {
 	home := t.TempDir()
 	store := JSONFileCatalog{Home: home, Path: filepath.Join(home, ".robert")}
 	raw := `{"version":1,"installDir":"/tmp/robert","custom":true,"repositories":[{"url":"git@example.com:group/api.git","path":"/tmp/missing","addedAt":"2026-09-26T12:00:00Z","note":"ignored","reference":{"type":"tag","value":"v1","source":"ignored"}}]}`
@@ -93,7 +93,7 @@ func TestUnknownFieldsAreIgnoredAndDroppedOnWrite(t *testing.T) {
 	if err != nil || string(before) != raw {
 		t.Fatalf("Read modified file: %v", err)
 	}
-	if err := store.Write(doc); err != nil {
+	if err := store.Update(func(latest *Document) error { *latest = doc; return nil }); err != nil {
 		t.Fatal(err)
 	}
 	after, err := os.ReadFile(store.Path)
@@ -110,12 +110,12 @@ func TestUnknownFieldsAreIgnoredAndDroppedOnWrite(t *testing.T) {
 	}
 }
 
-func TestWriteDoesNotOwnDuplicateInvariant(t *testing.T) {
+func TestUpdateDoesNotOwnDuplicateInvariant(t *testing.T) {
 	home := t.TempDir()
 	store := JSONFileCatalog{Home: home, Path: filepath.Join(home, ".robert")}
 	doc := validDocument(home)
 	doc.Repositories = append(doc.Repositories, doc.Repositories[0])
-	if err := store.Write(doc); err != nil {
+	if err := store.Update(func(latest *Document) error { *latest = doc; return nil }); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err := store.Read()
@@ -136,15 +136,15 @@ func TestMissingFileReturnsDefaultsWithoutWriting(t *testing.T) {
 	}
 }
 
-func TestReadAndWriteErrorsRetainStorageContext(t *testing.T) {
+func TestReadAndUpdateErrorsRetainStorageContext(t *testing.T) {
 	home := t.TempDir()
 	store := JSONFileCatalog{Home: home, Path: home} // A directory cannot be read or replaced as a file.
 	_, readErr := store.Read()
-	writeErr := store.Write(validDocument(home))
-	for operation, err := range map[string]error{"read": readErr, "write": writeErr} {
+	updateErr := store.Update(func(latest *Document) error { *latest = validDocument(home); return nil })
+	for _, err := range []error{readErr, updateErr} {
 		var failure *StorageError
-		if !errors.As(err, &failure) || failure.Operation != operation || failure.Path != home || failure.Cause == nil || !errors.Is(err, failure.Cause) {
-			t.Fatalf("%s error lost storage context: %v", operation, err)
+		if !errors.As(err, &failure) || failure.Operation != "read" || failure.Path != home || failure.Cause == nil || !errors.Is(err, failure.Cause) {
+			t.Fatalf("error lost storage context: %v", err)
 		}
 	}
 	files, err := os.ReadDir(filepath.Dir(home))
@@ -158,11 +158,11 @@ func TestReadAndWriteErrorsRetainStorageContext(t *testing.T) {
 	}
 }
 
-func TestWritePreservesJSONSchemaAndPrivatePermissions(t *testing.T) {
+func TestUpdatePreservesJSONSchemaAndPrivatePermissions(t *testing.T) {
 	home := t.TempDir()
 	store := NewJSONFileCatalog(home)
 	doc := validDocument(home)
-	if err := store.Write(doc); err != nil {
+	if err := store.Update(func(latest *Document) error { *latest = doc; return nil }); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(store.Path)

@@ -6,6 +6,10 @@ import "fmt"
 type StorageError struct {
 	Operation string
 	Path      string
+	LockPath  string
+	// Committed means the update was saved before a subsequent failure.
+	// Callers must not roll back external resources referenced by that update.
+	Committed bool
 	Cause     error
 }
 

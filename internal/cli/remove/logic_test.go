@@ -62,7 +62,11 @@ type recordingStore struct {
 }
 
 func (s *recordingStore) Read() (catalog.Document, error) { return s.doc, nil }
-func (s *recordingStore) Write(doc catalog.Document) error {
+func (s *recordingStore) Update(change func(*catalog.Document) error) error {
+	doc := s.doc
+	if err := change(&doc); err != nil {
+		return err
+	}
 	if s.saveErr != nil {
 		return s.saveErr
 	}
