@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/isthatcentered/robert/internal/cli/arguments"
 	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/repository"
@@ -26,7 +25,7 @@ type Result struct {
 	Path      string               `json:"path"`
 }
 
-func (l Logic) Add(ctx context.Context, selection arguments.Selection) (Result, error) {
+func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 	doc, _, err := l.Config.Load()
 	if err != nil {
 		return Result{}, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error()})

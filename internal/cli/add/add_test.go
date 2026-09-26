@@ -1,4 +1,4 @@
-package arguments
+package add
 
 import (
 	"strings"
@@ -22,7 +22,7 @@ func TestParseRepositoryAndReferenceForms(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := Parse(tc.args)
+			got, err := parseArgs(tc.args)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,7 +59,7 @@ func TestParseRejectsInvalidSelection(t *testing.T) {
 		{"owner/repo", "--", "--branch", "main"},
 	}
 	for _, args := range cases {
-		if _, err := Parse(args); err == nil {
+		if _, err := parseArgs(args); err == nil {
 			t.Errorf("accepted invalid arguments %v", args)
 		}
 	}
@@ -72,9 +72,9 @@ func TestParseHelp(t *testing.T) {
 		{"owner/repo", "--help"},
 		{"owner/repo", "--branch", "main", "-h"},
 	} {
-		got, err := Parse(args)
+		got, err := parseArgs(args)
 		if err != nil || !got.Help {
-			t.Errorf("Parse(%v) = %+v, %v; want help", args, got, err)
+			t.Errorf("parseArgs(%v) = %+v, %v; want help", args, got, err)
 		}
 	}
 }

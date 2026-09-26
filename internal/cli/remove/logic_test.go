@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/isthatcentered/robert/internal/cli/arguments"
 	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/repository"
 )
@@ -18,7 +17,7 @@ func TestRemoveSucceedsAfterSaveWhenCheckoutDeletionFails(t *testing.T) {
 	store := &recordingStore{doc: doc}
 	dirs := &failingDirs{store: store}
 	logic := Logic{Config: store, Dirs: dirs, ConfigPath: filepath.Join(home, ".robert")}
-	result, err := logic.Remove(arguments.Selection{URL: "https://example.com/demo.git"})
+	result, err := logic.Remove(Selection{URL: "https://example.com/demo.git"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +42,7 @@ func TestRemoveKeepsEntryAndDirectoryWhenSaveFails(t *testing.T) {
 	store := &recordingStore{doc: doc, saveErr: errors.New("disk is full")}
 	dirs := &failingDirs{store: store}
 	logic := Logic{Config: store, Dirs: dirs, ConfigPath: filepath.Join(home, ".robert")}
-	_, err := logic.Remove(arguments.Selection{URL: "https://example.com/demo.git"})
+	_, err := logic.Remove(Selection{URL: "https://example.com/demo.git"})
 	if err == nil {
 		t.Fatal("expected save error")
 	}

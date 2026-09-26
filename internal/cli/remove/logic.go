@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"path/filepath"
 
-	"github.com/isthatcentered/robert/internal/cli/arguments"
 	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/repository"
@@ -16,7 +15,7 @@ type Logic struct {
 	ConfigPath string
 }
 
-func (l Logic) Remove(selection arguments.Selection) (map[string]json.RawMessage, error) {
+func (l Logic) Remove(selection Selection) (map[string]json.RawMessage, error) {
 	doc, exists, err := l.Config.Load()
 	if err != nil {
 		return nil, problem.New("failed to read configuration", map[string]any{"path": l.ConfigPath, "cause": err.Error()})

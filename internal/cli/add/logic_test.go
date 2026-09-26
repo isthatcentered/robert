@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/isthatcentered/robert/internal/cli/arguments"
 	"github.com/isthatcentered/robert/internal/cli/config"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/repository"
@@ -19,7 +18,7 @@ func TestSaveFailureRemovesCheckoutAndReportsContext(t *testing.T) {
 	store := &failingStore{doc: config.New(home), saveErr: errors.New("disk is full")}
 	dirs := &recordingDirs{path: path, removeErr: errors.New("permission denied")}
 	logic := Logic{Config: store, Git: successfulGit{}, Dirs: dirs, ConfigPath: filepath.Join(home, ".robert"), Now: func() time.Time { return time.Unix(0, 0) }}
-	_, err := logic.Add(context.Background(), arguments.Selection{URL: "https://example.com/demo.git", Reference: &repository.Reference{Type: "branch", Value: "main"}})
+	_, err := logic.Add(context.Background(), Selection{URL: "https://example.com/demo.git", Reference: &repository.Reference{Type: "branch", Value: "main"}})
 	if err == nil {
 		t.Fatal("expected save error")
 	}
