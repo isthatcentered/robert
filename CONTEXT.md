@@ -21,3 +21,7 @@ _Avoid_: Installation
 
 **Reference**:
 The branch, tag, or commit selected for an installation.
+
+**Branch installation**:
+An installation whose saved reference is a branch. Its saved reference remains a branch even if someone changes or removes the local checkout directory.
+_Avoid_: Branch checkout when referring to the catalogue entry
