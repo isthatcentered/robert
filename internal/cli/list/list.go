@@ -13,10 +13,36 @@ import (
 
 const Usage = "robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
+const Help = `List saved repository checkouts.
+
+Usage:
+  robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]
+
+Options:
+  --search     Match text in the repository owner/name, ignoring case
+  --branch     Filter by an exact branch
+  --tag        Filter by an exact tag
+  --commit     Filter by an exact full 40-character commit ID
+  -h, --help   Show help
+
+Search and one reference filter can be combined.
+
+Examples:
+  robert list
+  robert list --search acme/api
+  robert list --branch main
+  robert list --search acme --tag v1.0.0`
+
 type Selection struct {
 	Search    string
 	Reference *repository.Reference
 	Help      bool
+	Filtered  bool
+}
+
+type Output struct {
+	Results  []Result
+	Filtered bool
 }
 
 func Handle(args []string, logic Logic) (any, error) {
@@ -25,9 +51,13 @@ func Handle(args []string, logic Logic) (any, error) {
 		return nil, problem.New(err.Error(), map[string]any{"usage": Usage})
 	}
 	if selection.Help {
-		return map[string]string{"usage": Usage}, nil
+		return Help, nil
 	}
-	return logic.List(selection)
+	results, err := logic.List(selection)
+	if err != nil {
+		return nil, err
+	}
+	return Output{Results: results, Filtered: selection.Filtered}, nil
 }
 
 func parseArgs(args []string) (Selection, error) {
@@ -74,5 +104,6 @@ func parseArgs(args []string) (Selection, error) {
 	if flags.NArg() != 0 {
 		return Selection{}, fmt.Errorf("unexpected argument %q: use --search, --branch, --tag, or --commit", flags.Arg(0))
 	}
+	result.Filtered = searchSet || result.Reference != nil
 	return result, nil
 }

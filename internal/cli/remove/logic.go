@@ -2,6 +2,7 @@ package remove
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/isthatcentered/robert/internal/catalog"
@@ -15,11 +16,23 @@ type Logic struct {
 }
 
 type Result struct {
-	Status    string               `json:"status"`
-	URL       string               `json:"url"`
-	Path      string               `json:"path"`
-	Reference repository.Reference `json:"reference"`
-	AddedAt   string               `json:"addedAt"`
+	Status       string
+	URL          string
+	Path         string
+	Reference    repository.Reference
+	AddedAt      string
+	CleanupError error
+}
+
+func Format(result *Result) string {
+	return fmt.Sprintf("Removed from catalogue: %s\n  Reference: %s %s\n  Checkout:  %s\n  Added:     %s\n", result.URL, result.Reference.Type, result.Reference.Value, result.Path, result.AddedAt)
+}
+
+func FormatWarning(result *Result) string {
+	if result.CleanupError == nil {
+		return ""
+	}
+	return fmt.Sprintf("warning: could not delete checkout: %s\n  Checkout: %s\n", result.CleanupError, result.Path)
 }
 
 func (l Logic) Remove(selection Selection) (*Result, error) {
@@ -43,16 +56,18 @@ func (l Logic) Remove(selection Selection) (*Result, error) {
 		if len(references) > 1 {
 			context := map[string]any{"url": selection.URL, "matchingReferences": references}
 			if selection.Reference != nil {
-				return problem.New("multiple identical installations match; remove duplicate entries from configuration", context)
+				context["hint"] = "remove duplicate entries from the catalogue"
+				return problem.New("multiple identical checkouts match this repository", context)
 			}
-			return problem.New("multiple installations match this repository; specify --branch, --tag, or --commit", context)
+			context["hint"] = "specify --branch, --tag, or --commit"
+			return problem.New("multiple saved checkouts match this repository", context)
 		}
 		if index == -1 {
-			context := map[string]any{"url": selection.URL, "hint": "use list to see saved installations, or add this repository before removing it"}
+			context := map[string]any{"url": selection.URL, "hint": "run \"robert list\" to see saved repositories, or add this repository before removing it"}
 			if selection.Reference != nil {
 				context["reference"] = selection.Reference
 			}
-			return problem.New("repository installation not found in configuration", context)
+			return problem.New("repository checkout not found in catalogue", context)
 		}
 		selected := doc.Repositories[index]
 		if selected.Path == "" || !filepath.IsAbs(selected.Path) {
@@ -76,6 +91,6 @@ func (l Logic) Remove(selection Selection) (*Result, error) {
 		}
 		return nil, problem.Wrap("failed to save configuration before removing checkout", err, map[string]any{"url": entry.URL, "checkoutPath": entry.Path})
 	}
-	_ = l.Dirs.Remove(entry.Path)
-	return &Result{Status: "removed", URL: entry.URL, Path: entry.Path, Reference: repository.Reference(entry.Reference), AddedAt: entry.AddedAt}, nil
+	cleanupErr := l.Dirs.Remove(entry.Path)
+	return &Result{Status: "removed", URL: entry.URL, Path: entry.Path, Reference: repository.Reference(entry.Reference), AddedAt: entry.AddedAt, CleanupError: cleanupErr}, nil
 }

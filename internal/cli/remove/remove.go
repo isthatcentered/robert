@@ -13,13 +13,36 @@ import (
 
 const Usage = "robert remove <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
+const Help = `Remove a repository checkout from the catalogue.
+
+Usage:
+  robert remove <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]
+
+Arguments:
+  <repo>       owner/repo or a remote Git URL
+
+Options:
+  --branch     Select an exact branch
+  --tag        Select an exact tag
+  --commit     Select an exact commit by its full 40-character ID
+  -h, --help   Show help
+
+A reference is required when the repository has multiple saved checkouts.
+
+Examples:
+  robert remove acme/api
+  robert remove https://github.com/isthatcentered/robert.git
+  robert remove acme/api --branch main
+  robert remove acme/api --tag v1.0.0
+  robert remove acme/api --commit 0123456789abcdef0123456789abcdef01234567`
+
 func Handle(args []string, logic Logic) (any, error) {
 	selection, err := parseArgs(args)
 	if err != nil {
 		return nil, problem.New(err.Error(), map[string]any{"usage": Usage})
 	}
 	if selection.Help {
-		return map[string]string{"usage": Usage}, nil
+		return Help, nil
 	}
 	return logic.Remove(selection)
 }

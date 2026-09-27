@@ -42,7 +42,7 @@ func TestHelpDoesNotReadCatalogue(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if result.(map[string]string)["usage"] != Usage {
+		if result.(string) != Help {
 			t.Fatalf("help = %v", result)
 		}
 	}

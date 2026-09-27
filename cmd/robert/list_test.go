@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -209,9 +208,23 @@ func listCommand(t *testing.T, flags ...string) []map[string]any {
 	if code := run(context.Background(), args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {
 		t.Fatalf("robert %v exited %d: %s", args, code, stderr.String())
 	}
-	var results []map[string]any
-	if err := json.Unmarshal(stdout.Bytes(), &results); err != nil || results == nil {
-		t.Fatalf("expected JSON array, got %s: %v", stdout.String(), err)
+	output := strings.TrimSuffix(stdout.String(), "\n")
+	if output == "No repositories found." || output == "No repositories match." {
+		return []map[string]any{}
+	}
+	lines := strings.Split(output, "\n")
+	if !strings.Contains(lines[0], "REPOSITORY") || !strings.Contains(lines[0], "REFERENCE") || !strings.Contains(lines[0], "CHECKOUT") {
+		t.Fatalf("missing list header: %q", output)
+	}
+	results := make([]map[string]any, 0, len(lines)-1)
+	for _, line := range lines[1:] {
+		fields := strings.Fields(line)
+		if len(fields) < 4 {
+			t.Fatalf("invalid list row: %q", line)
+		}
+		results = append(results, map[string]any{
+			"url": fields[0], "reference": map[string]any{"type": fields[1], "value": fields[2]}, "path": strings.Join(fields[3:], " "),
+		})
 	}
 	return results
 }

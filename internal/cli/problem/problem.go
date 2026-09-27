@@ -6,10 +6,10 @@ import (
 	"github.com/isthatcentered/robert/internal/catalog"
 )
 
-// Error is the JSON error returned by the CLI.
+// Error carries a user-facing message and optional details for CLI formatting.
 type Error struct {
-	Message string         `json:"error"`
-	Context map[string]any `json:"context,omitempty"`
+	Message string
+	Context map[string]any
 }
 
 func (e *Error) Error() string { return e.Message }
@@ -42,7 +42,7 @@ func AsError(err error) *Error {
 		}
 		if storage.Committed {
 			context["committed"] = true
-			context["hint"] = "the catalogue update was saved; use list to inspect the saved installations before retrying"
+			context["hint"] = "the catalogue update was saved; run \"robert list\" to inspect saved repositories before retrying"
 		}
 		return &Error{Message: "failed to " + storage.Operation + " configuration", Context: context}
 	}

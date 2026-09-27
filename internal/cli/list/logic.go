@@ -2,9 +2,11 @@ package list
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/repository"
@@ -15,9 +17,34 @@ type Logic struct {
 }
 
 type Result struct {
-	URL       string               `json:"url"`
-	Reference repository.Reference `json:"reference"`
-	Path      string               `json:"path"`
+	URL       string
+	Reference repository.Reference
+	Path      string
+}
+
+func Format(output Output) string {
+	if len(output.Results) == 0 {
+		if output.Filtered {
+			return "No repositories match.\n"
+		}
+		return "No repositories found.\n"
+	}
+	const repositoryHeader = "REPOSITORY"
+	const referenceHeader = "REFERENCE"
+	const checkoutHeader = "CHECKOUT"
+	repositoryWidth := len(repositoryHeader)
+	referenceWidth := len(referenceHeader)
+	for _, result := range output.Results {
+		repositoryWidth = max(repositoryWidth, utf8.RuneCountInString(result.URL))
+		referenceWidth = max(referenceWidth, utf8.RuneCountInString(result.Reference.Type)+1+utf8.RuneCountInString(result.Reference.Value))
+	}
+	var text strings.Builder
+	fmt.Fprintf(&text, "%-*s  %-*s  %s\n", repositoryWidth, repositoryHeader, referenceWidth, referenceHeader, checkoutHeader)
+	for _, result := range output.Results {
+		reference := result.Reference.Type + " " + result.Reference.Value
+		fmt.Fprintf(&text, "%-*s  %-*s  %s\n", repositoryWidth, result.URL, referenceWidth, reference, result.Path)
+	}
+	return text.String()
 }
 
 func (l Logic) List(selection Selection) ([]Result, error) {

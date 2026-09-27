@@ -24,6 +24,9 @@ func TestRemoveSucceedsAfterSaveWhenCheckoutDeletionFails(t *testing.T) {
 	if result.Status != "removed" {
 		t.Fatalf("status = %s", result.Status)
 	}
+	if got := FormatWarning(result); got != "warning: could not delete checkout: permission denied\n  Checkout: "+path+"\n" {
+		t.Fatalf("warning = %q", got)
+	}
 	if len(store.doc.Repositories) != 0 {
 		t.Fatalf("entry was retained: %v", store.doc.Repositories)
 	}

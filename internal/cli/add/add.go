@@ -14,13 +14,36 @@ import (
 
 const Usage = "robert add <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
+const Help = `Add a repository.
+
+Usage:
+  robert add <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]
+
+Arguments:
+  <repo>       owner/repo or a remote Git URL
+
+Options:
+  --branch     Install a branch
+  --tag        Install a tag
+  --commit     Install a commit by its full 40-character ID
+  -h, --help   Show help
+
+If no reference is given, Robert uses the remote's default branch.
+
+Examples:
+  robert add acme/api
+  robert add https://github.com/isthatcentered/robert.git
+  robert add acme/api --branch develop
+  robert add acme/api --tag v1.0.0
+  robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567`
+
 func Handle(ctx context.Context, args []string, logic Logic) (any, error) {
 	selection, err := parseArgs(args)
 	if err != nil {
 		return nil, problem.New(err.Error(), map[string]any{"usage": Usage})
 	}
 	if selection.Help {
-		return map[string]string{"usage": Usage}, nil
+		return Help, nil
 	}
 	return logic.Add(ctx, selection)
 }

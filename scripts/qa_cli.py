@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import statistics
 import subprocess
@@ -44,6 +45,55 @@ def distribution(values):
         "p95_ms": round(ordered[math.ceil(len(values) * .95) - 1], 3),
         "max_ms": round(max(values), 3),
     }
+
+
+def parse_cli_text(args, output, failed):
+    lines = output.rstrip("\n").split("\n")
+    require(lines and lines[0], f"empty CLI output: {args}")
+    if not failed and args[0] == "list":
+        if lines[0] in ("No repositories found.", "No repositories match."):
+            return []
+        require(lines[0].startswith("REPOSITORY") and "REFERENCE" in lines[0]
+                and "CHECKOUT" in lines[0], f"missing list header: {output}")
+        entries = []
+        for line in lines[1:]:
+            columns = re.split(r"\s{2,}", line, maxsplit=2)
+            require(len(columns) == 3, f"invalid list row: {line}")
+            kind, value = columns[1].split(" ", 1)
+            entries.append({"url": columns[0], "reference": {"type": kind, "value": value},
+                            "path": columns[2]})
+        return entries
+
+    first = lines[0]
+    context = {}
+    if failed:
+        require(first.startswith("error: "), f"missing text error: {output}")
+        data = {"error": first.removeprefix("error: "), "context": context}
+    elif first.startswith("Repository: "):
+        data = {"status": "added", "url": first.removeprefix("Repository: ")}
+    elif first.startswith("Removed from catalogue: "):
+        data = {"status": "removed", "url": first.removeprefix("Removed from catalogue: ")}
+    else:
+        raise AssertionError(f"unexpected CLI output: {output}")
+    fields = {"Repository": "url", "Checkout": "path", "Config": "path",
+              "Checkout root": "installDir", "Lock file": "lockPath", "Hint": "hint",
+              "Cause": "cause", "Git command": "gitCommand", "Added": "addedAt",
+              "Usage": "usage", "Cleanup error": "cleanupError"}
+    for line in lines[1:]:
+        line = line.strip()
+        if ": " not in line:
+            continue
+        label, value = line.split(": ", 1)
+        value = value.strip()
+        target = context if failed else data
+        if label == "Reference":
+            kind, reference = value.split(" ", 1)
+            target["reference"] = {"type": kind, "value": reference}
+        elif label in fields:
+            target[fields[label]] = value
+            if label == "Cause" and "clone" in data.get("error", ""):
+                target["gitError"] = value
+    return data
 
 
 class QA:
@@ -96,9 +146,14 @@ class QA:
             self.report["commands"].append(record)
         require(code is None or result.returncode == code, f"unexpected exit: {record}")
         require(result.returncode in (0, 1), f"invalid exit code: {record}")
-        data = json.loads(result.stdout if result.returncode == 0 else result.stderr)
-        require(not (result.stderr if result.returncode == 0 else result.stdout),
-                f"unexpected output on other stream: {record}")
+        data = parse_cli_text(args, result.stdout if result.returncode == 0 else result.stderr,
+                              result.returncode != 0)
+        if result.returncode:
+            require(not result.stdout, f"unexpected stdout on failure: {record}")
+        elif result.stderr:
+            require(args[0] == "remove" and result.stderr.startswith("warning: could not delete checkout: ")
+                    and "  Checkout: " in result.stderr, f"unexpected warning: {record}")
+            data["warning"] = result.stderr
         if result.returncode:
             require(isinstance(data, dict) and isinstance(data.get("error"), str)
                     and data["error"] and data.get("context"), f"error lacks context: {record}")
@@ -281,20 +336,13 @@ class QA:
         (protected / "file").write_text("cannot unlink while parent is read-only\n")
         protected.chmod(0o500)
         try:
-            result = self.cli("remove", REMOTE, code=None)
+            result = self.cli("remove", REMOTE, code=0)
             remaining = (protected / "file").exists()
-            if result.get("status") == "removed" and remaining:
-                self.report["findings"].append({
-                    "id": "silent-checkout-deletion-failure",
-                    "case": self.case,
-                    "severity": "medium",
-                    "summary": "remove exits 0 with status removed while checkout files remain",
-                    "reproduction": "Add a repository; create a nonempty directory inside the checkout; chmod it 0500; remove the repository as a non-root user.",
-                    "impact": "Catalogue entry is gone, list is empty, retrying remove returns not-found, and leftover files need manual cleanup.",
-                    "response": result,
-                })
-                require(self.cli("list") == [], "failed deletion retained entry unexpectedly")
-                self.cli("remove", REMOTE, code=1)
+            require(result["status"] == "removed", "remove did not report catalogue removal")
+            require(bool(result.get("warning")) == remaining,
+                    f"checkout warning disagrees with directory state: {result}")
+            require(self.cli("list") == [], "failed deletion retained entry unexpectedly")
+            self.cli("remove", REMOTE, code=1)
         finally:
             if protected.exists():
                 protected.chmod(0o700)

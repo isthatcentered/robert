@@ -19,10 +19,14 @@ type Logic struct {
 }
 
 type Result struct {
-	Status    string               `json:"status"`
-	URL       string               `json:"url"`
-	Reference repository.Reference `json:"reference"`
-	Path      string               `json:"path"`
+	Status    string
+	URL       string
+	Reference repository.Reference
+	Path      string
+}
+
+func Format(result Result) string {
+	return fmt.Sprintf("Repository: %s\n  Reference: %s %s\n  Checkout:  %s\n", result.URL, result.Reference.Type, result.Reference.Value, result.Path)
 }
 
 func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {

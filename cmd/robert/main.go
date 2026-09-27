@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 
@@ -13,7 +12,22 @@ import (
 	"github.com/isthatcentered/robert/internal/cli/remove"
 )
 
-const usage = "robert <add|remove> <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]\n" + list.Usage
+const help = `Manage local checkouts of remote Git repositories.
+
+Usage:
+  robert <command> [arguments]
+
+Commands:
+  add       Add a repository
+  remove    Remove a repository checkout
+  list      List repository checkouts
+
+Examples:
+  robert add acme/api
+  robert list
+  robert remove acme/api --branch main
+
+Run "robert <command> --help" for command details.`
 
 func main() {
 	os.Exit(run(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
@@ -21,13 +35,13 @@ func main() {
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		return writeError(stderr, problem.New("command is required", map[string]any{"usage": usage}))
+		return writeError(stderr, problem.New("command is required", nil))
 	}
 	if args[0] == "-h" || args[0] == "--help" {
-		return writeResult(stdout, stderr, map[string]string{"usage": usage})
+		return writeText(stdout, stderr, help+"\n")
 	}
 	if args[0] != "add" && args[0] != "remove" && args[0] != "list" {
-		return writeError(stderr, problem.New("unknown command", map[string]any{"command": args[0], "usage": usage}))
+		return writeError(stderr, problem.New("unknown command", map[string]any{"command": args[0]}))
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -49,17 +63,37 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return writeError(stderr, err)
 	}
-	return writeResult(stdout, stderr, result)
+	var output, warning string
+	switch value := result.(type) {
+	case string:
+		output = value + "\n"
+	case add.Result:
+		output = add.Format(value)
+	case *remove.Result:
+		output = remove.Format(value)
+		warning = remove.FormatWarning(value)
+	case list.Output:
+		output = list.Format(value)
+	default:
+		return writeError(stderr, problem.New("failed to format command result", nil))
+	}
+	if code := writeText(stdout, stderr, output); code != 0 {
+		return code
+	}
+	if warning != "" {
+		_, _ = io.WriteString(stderr, warning)
+	}
+	return 0
 }
 
-func writeResult(stdout, stderr io.Writer, result any) int {
-	if err := json.NewEncoder(stdout).Encode(result); err != nil {
+func writeText(stdout, stderr io.Writer, output string) int {
+	if _, err := io.WriteString(stdout, output); err != nil {
 		return writeError(stderr, problem.New("failed to write command result", map[string]any{"cause": err.Error()}))
 	}
 	return 0
 }
 
 func writeError(stderr io.Writer, err error) int {
-	_ = json.NewEncoder(stderr).Encode(problem.AsError(err))
+	_, _ = io.WriteString(stderr, problem.Format(err))
 	return 1
 }

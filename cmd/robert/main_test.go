@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestFlagErrorsReturnJSON(t *testing.T) {
+func TestFlagErrorsReturnText(t *testing.T) {
 	for _, name := range []string{"add", "remove", "list"} {
 		t.Run(name, func(t *testing.T) {
 			for _, flags := range [][]string{
@@ -35,6 +35,74 @@ func TestFlagErrorsReturnJSON(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestHelpShowsCommandExamples(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	for _, tc := range []struct {
+		args []string
+		want []string
+	}{
+		{[]string{"--help"}, []string{"Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api --branch main"}},
+		{[]string{"add", "--help"}, []string{"robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
+		{[]string{"remove", "--help"}, []string{"robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
+		{[]string{"list", "--help"}, []string{"robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
+	} {
+		var stdout, stderr bytes.Buffer
+		if code := run(context.Background(), tc.args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {
+			t.Fatalf("robert %v: exit %d, stderr %q", tc.args, code, stderr.String())
+		}
+		for _, want := range tc.want {
+			if !strings.Contains(stdout.String(), want) {
+				t.Fatalf("robert %v help missing %q:\n%s", tc.args, want, stdout.String())
+			}
+		}
+	}
+}
+
+func TestSavedRepositoryTextLifecycle(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	url := "https://github.com/acme/api.git"
+	path := filepath.Join(home, "checkout")
+	if err := os.Mkdir(path, 0700); err != nil {
+		t.Fatal(err)
+	}
+	writeJSON(t, filepath.Join(home, ".robert"), map[string]any{
+		"version": 1, "installDir": filepath.Join(home, "install"),
+		"repositories": []any{map[string]any{
+			"url": url, "path": path, "reference": map[string]string{"type": "branch", "value": "main"},
+			"addedAt": "2026-09-26T12:00:00Z",
+		}},
+	})
+	runOutput := func(args ...string) string {
+		t.Helper()
+		var stdout, stderr bytes.Buffer
+		if code := run(context.Background(), args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {
+			t.Fatalf("robert %v: exit %d, stderr %q", args, code, stderr.String())
+		}
+		return stdout.String()
+	}
+	if got, want := runOutput("add", url, "--branch", "main"),
+		"Repository: "+url+"\n  Reference: branch main\n  Checkout:  "+path+"\n"; got != want {
+		t.Fatalf("add output = %q, want %q", got, want)
+	}
+	if got := runOutput("list"); !strings.HasPrefix(got, "REPOSITORY") || !strings.Contains(got, url+"  branch main") || !strings.Contains(got, path) {
+		t.Fatalf("list output = %q", got)
+	}
+	if got, want := runOutput("remove", url, "--branch", "main"),
+		"Removed from catalogue: "+url+"\n  Reference: branch main\n  Checkout:  "+path+"\n  Added:     2026-09-26T12:00:00Z\n"; got != want {
+		t.Fatalf("remove output = %q, want %q", got, want)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("checkout remains after remove: %v", err)
+	}
+	if got := runOutput("list"); got != "No repositories found.\n" {
+		t.Fatalf("empty list output = %q", got)
+	}
+	if got := runOutput("list", "--search", "missing"); got != "No repositories match.\n" {
+		t.Fatalf("filtered list output = %q", got)
 	}
 }
 
@@ -226,9 +294,68 @@ func command(t *testing.T, expectedCode int, args ...string) map[string]any {
 	if expectedCode != 0 {
 		data = stderr.Bytes()
 	}
-	var result map[string]any
-	if err := json.Unmarshal(data, &result); err != nil {
-		t.Fatalf("invalid JSON %q: %v", data, err)
+	return parseCommandText(t, string(data), expectedCode != 0)
+}
+
+func parseCommandText(t *testing.T, output string, failed bool) map[string]any {
+	t.Helper()
+	lines := strings.Split(strings.TrimSuffix(output, "\n"), "\n")
+	if len(lines) == 0 || lines[0] == "" {
+		t.Fatalf("empty command output: %q", output)
+	}
+	result := map[string]any{}
+	context := map[string]any{}
+	if failed {
+		if !strings.HasPrefix(lines[0], "error: ") {
+			t.Fatalf("expected text error, got %q", output)
+		}
+		result["error"] = strings.TrimPrefix(lines[0], "error: ")
+		result["context"] = context
+	} else if strings.HasPrefix(lines[0], "Repository: ") {
+		result["status"] = "added"
+		result["url"] = strings.TrimPrefix(lines[0], "Repository: ")
+	} else if strings.HasPrefix(lines[0], "Removed from catalogue: ") {
+		result["status"] = "removed"
+		result["url"] = strings.TrimPrefix(lines[0], "Removed from catalogue: ")
+	} else {
+		t.Fatalf("unexpected command output: %q", output)
+	}
+	for _, line := range lines[1:] {
+		line = strings.TrimSpace(line)
+		key, value, ok := strings.Cut(line, ": ")
+		if !ok {
+			continue
+		}
+		value = strings.TrimSpace(value)
+		target := result
+		if failed {
+			target = context
+		}
+		switch key {
+		case "Repository":
+			target["url"] = value
+		case "Reference":
+			kind, ref, ok := strings.Cut(value, " ")
+			if !ok {
+				t.Fatalf("invalid reference %q", value)
+			}
+			target["reference"] = map[string]any{"type": kind, "value": ref}
+		case "Checkout", "Config":
+			target["path"] = value
+		case "Lock file":
+			target["lockPath"] = value
+		case "Cause":
+			target["cause"] = value
+			if strings.Contains(result["error"].(string), "clone") {
+				target["gitError"] = value
+			}
+		case "Hint":
+			target["hint"] = value
+		case "Added":
+			target["addedAt"] = value
+		case "Usage":
+			target["usage"] = value
+		}
 	}
 	return result
 }
@@ -299,7 +426,7 @@ func TestRemoveFromMissingCatalogueDoesNotCreateFile(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	result := command(t, 1, "remove", "owner/repo")
-	assertField(t, result, "error", "repository installation not found in configuration")
+	assertField(t, result, "error", "repository checkout not found in catalogue")
 	failure := result["context"].(map[string]any)
 	assertField(t, failure, "url", "https://github.com/owner/repo.git")
 	if stringField(t, failure, "hint") == "" {

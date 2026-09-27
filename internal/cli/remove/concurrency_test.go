@@ -48,7 +48,7 @@ func TestRemoveUnlocksBeforeDeletionAndKeepsConcurrentReplacement(t *testing.T) 
 		secondDone <- removeOutcome{result, err}
 	}()
 	second := receiveRemove(t, secondDone)
-	if second.err == nil || problem.AsError(second.err).Message != "repository installation not found in configuration" {
+	if second.err == nil || problem.AsError(second.err).Message != "repository checkout not found in catalogue" {
 		t.Fatalf("second remove = %+v", second)
 	}
 
