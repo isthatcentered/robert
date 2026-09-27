@@ -10,6 +10,7 @@ import (
 	"github.com/isthatcentered/robert/internal/cli/list"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/remove"
+	"github.com/isthatcentered/robert/internal/cli/update"
 )
 
 const help = `Manage local checkouts of remote Git repositories.
@@ -21,10 +22,12 @@ Commands:
   add       Add a repository
   remove    Remove a repository checkout
   list      List repository checkouts
+  update    Update installed branch checkouts
 
 Examples:
   robert add acme/api
   robert list
+  robert update
   robert remove acme/api --branch main
 
 Run "robert <command> --help" for command details.`
@@ -40,7 +43,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if args[0] == "-h" || args[0] == "--help" {
 		return writeText(stdout, stderr, help+"\n")
 	}
-	if args[0] != "add" && args[0] != "remove" && args[0] != "list" {
+	if args[0] != "add" && args[0] != "remove" && args[0] != "list" && args[0] != "update" {
 		return writeError(stderr, problem.New("unknown command", map[string]any{"command": args[0]}))
 	}
 	home, err := os.UserHomeDir()
@@ -59,11 +62,15 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	case "list":
 		logic := list.Logic{Catalog: store}
 		result, err = list.Handle(args[1:], logic)
+	case "update":
+		logic := update.Logic{Catalog: store, Git: update.GitCLI{}}
+		result, err = update.Handle(ctx, args[1:], logic)
 	}
 	if err != nil {
 		return writeError(stderr, err)
 	}
 	var output, warning string
+	failed := false
 	switch value := result.(type) {
 	case string:
 		output = value + "\n"
@@ -74,6 +81,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		warning = remove.FormatWarning(value)
 	case list.Output:
 		output = list.Format(value)
+	case update.Output:
+		output = update.Format(value)
+		failed = value.Failed()
 	default:
 		return writeError(stderr, problem.New("failed to format command result", nil))
 	}
@@ -82,6 +92,9 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if warning != "" {
 		_, _ = io.WriteString(stderr, warning)
+	}
+	if failed {
+		return 1
 	}
 	return 0
 }

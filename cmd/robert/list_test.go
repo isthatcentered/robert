@@ -160,7 +160,7 @@ func TestAllCommandsReportMalformedJSONBeforeFilteringOrMutation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"list", "--search", "other"}, {"add", "other/repo", "--branch", "main"}, {"remove", "other/repo"}} {
+	for _, args := range [][]string{{"list", "--search", "other"}, {"add", "other/repo", "--branch", "main"}, {"remove", "other/repo"}, {"update"}} {
 		result := command(t, 1, args...)
 		assertField(t, result, "error", "failed to read configuration")
 		failure := result["context"].(map[string]any)

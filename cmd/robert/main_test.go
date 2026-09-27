@@ -44,10 +44,11 @@ func TestHelpShowsCommandExamples(t *testing.T) {
 		args []string
 		want []string
 	}{
-		{[]string{"--help"}, []string{"Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api --branch main"}},
+		{[]string{"--help"}, []string{"Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api --branch main", "robert update"}},
 		{[]string{"add", "--help"}, []string{"robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
 		{[]string{"remove", "--help"}, []string{"robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
 		{[]string{"list", "--help"}, []string{"robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
+		{[]string{"update", "--help"}, []string{"robert update", "fast-forward-only"}},
 	} {
 		var stdout, stderr bytes.Buffer
 		if code := run(context.Background(), tc.args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {
@@ -444,7 +445,7 @@ func TestAllCommandsReportLockFailuresWithStorageContext(t *testing.T) {
 	if err := os.Mkdir(lockPath, 0700); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"list"}, {"add", "owner/repo", "--branch", "main"}, {"remove", "owner/repo"}} {
+	for _, args := range [][]string{{"list"}, {"add", "owner/repo", "--branch", "main"}, {"remove", "owner/repo"}, {"update"}} {
 		result := command(t, 1, args...)
 		assertField(t, result, "error", "failed to lock configuration")
 		failure := result["context"].(map[string]any)
