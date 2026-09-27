@@ -29,10 +29,10 @@ type jsonDocument struct {
 }
 
 type jsonEntry struct {
-	URL       string    `json:"url"`
-	Path      string    `json:"path"`
-	Reference Reference `json:"reference"`
-	AddedAt   string    `json:"addedAt"`
+	URL       RepositoryURL `json:"url"`
+	Path      string        `json:"path"`
+	Reference Reference     `json:"reference"`
+	AddedAt   string        `json:"addedAt"`
 }
 
 func (s JSONFileCatalog) Read() (doc Document, err error) {

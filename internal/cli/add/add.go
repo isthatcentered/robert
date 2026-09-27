@@ -10,7 +10,6 @@ import (
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 const Usage = "robert add <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
@@ -50,7 +49,7 @@ func Handle(ctx context.Context, args []string, logic Logic) (any, error) {
 }
 
 type Selection struct {
-	URL       string
+	URL       catalog.RepositoryURL
 	Reference *catalog.Reference
 	Help      bool
 }
@@ -62,7 +61,7 @@ func parseArgs(args []string) (Selection, error) {
 	if len(args) == 0 {
 		return Selection{}, fmt.Errorf("repository is required")
 	}
-	url, err := repository.NormalizeURL(args[0])
+	url, err := catalog.ParseRepositoryURL(args[0])
 	if err != nil {
 		return Selection{}, err
 	}

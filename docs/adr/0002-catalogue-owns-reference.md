@@ -15,4 +15,3 @@ The catalogue and CLI defined separate reference types with the same fields. Com
 ## Consequences
 
 - Commands use catalogue references directly without type conversions.
-- The repository CLI package contains remote URL behavior only.

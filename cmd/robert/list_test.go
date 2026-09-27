@@ -18,7 +18,7 @@ func TestListSearchAndReferenceCombinations(t *testing.T) {
 	sha := "1234567890abcdef1234567890abcdef12345678"
 	doc := catalog.Document{Version: 1, InstallDir: filepath.Join(home, ".agents", "robert"), Repositories: []catalog.Entry{}}
 	entry := func(remote, kind, value, path string) catalog.Entry {
-		return catalog.Entry{URL: remote, Reference: catalog.Reference{Type: kind, Value: value}, Path: filepath.Join(home, path), AddedAt: "2026-09-26T12:00:00Z"}
+		return catalog.Entry{URL: catalog.RepositoryURL(remote), Reference: catalog.Reference{Type: kind, Value: value}, Path: filepath.Join(home, path), AddedAt: "2026-09-26T12:00:00Z"}
 	}
 	api := "https://github.com/acme/api.git"
 	web := "https://github.com/acme/web.git"
@@ -77,7 +77,7 @@ func TestListSearchAndReferenceCombinations(t *testing.T) {
 				found := false
 				for _, saved := range doc.Repositories {
 					if saved.Path == result["path"] {
-						assertField(t, result, "url", saved.URL)
+						assertField(t, result, "url", string(saved.URL))
 						assertReference(t, result, saved.Reference.Type, saved.Reference.Value)
 						found = true
 					}

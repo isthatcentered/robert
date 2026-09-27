@@ -26,7 +26,7 @@ func TestParseRepositoryAndReferenceForms(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got.URL != tc.url {
+			if string(got.URL) != tc.url {
 				t.Fatalf("URL = %q, want %q", got.URL, tc.url)
 			}
 			if tc.kind == "" {

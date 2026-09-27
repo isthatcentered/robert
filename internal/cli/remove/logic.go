@@ -16,7 +16,7 @@ type Logic struct {
 
 type Result struct {
 	Status       string
-	URL          string
+	URL          catalog.RepositoryURL
 	Path         string
 	Reference    catalog.Reference
 	AddedAt      string

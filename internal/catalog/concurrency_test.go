@@ -23,7 +23,7 @@ func TestConcurrentUpdatesPreserveEveryChange(t *testing.T) {
 		go func() {
 			<-start
 			done <- store.Update(func(doc *Document) error {
-				doc.Repositories = append(doc.Repositories, Entry{URL: fmt.Sprintf("repo-%d", i)})
+				doc.Repositories = append(doc.Repositories, Entry{URL: RepositoryURL(fmt.Sprintf("https://example.com/repo-%d.git", i))})
 				return nil
 			})
 		}()
@@ -36,7 +36,7 @@ func TestConcurrentUpdatesPreserveEveryChange(t *testing.T) {
 	if err != nil || len(doc.Repositories) != writers {
 		t.Fatalf("Read = %+v, %v; want %d entries", doc, err, writers)
 	}
-	seen := map[string]bool{}
+	seen := map[RepositoryURL]bool{}
 	for _, entry := range doc.Repositories {
 		if seen[entry.URL] {
 			t.Fatalf("duplicate entry %q", entry.URL)

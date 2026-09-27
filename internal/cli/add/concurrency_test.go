@@ -117,8 +117,10 @@ type pausedGit struct {
 	resume  <-chan struct{}
 }
 
-func (pausedGit) DefaultBranch(context.Context, string) (string, error) { return "main", nil }
-func (g pausedGit) Install(context.Context, string, catalog.Reference, string) error {
+func (pausedGit) DefaultBranch(context.Context, catalog.RepositoryURL) (string, error) {
+	return "main", nil
+}
+func (g pausedGit) Install(context.Context, catalog.RepositoryURL, catalog.Reference, string) error {
 	close(g.started)
 	<-g.resume
 	return nil

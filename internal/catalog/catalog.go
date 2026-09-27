@@ -1,4 +1,4 @@
-// Package catalog defines the catalogue persistence boundary.
+// Package catalog defines the catalogue domain types and persistence boundary.
 package catalog
 
 type Catalog interface {
@@ -17,7 +17,7 @@ type Document struct {
 }
 
 type Entry struct {
-	URL       string
+	URL       RepositoryURL
 	Path      string
 	Reference Reference
 	AddedAt   string

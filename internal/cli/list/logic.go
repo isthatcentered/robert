@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/isthatcentered/robert/internal/catalog"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 type Logic struct {
@@ -17,7 +16,7 @@ type Logic struct {
 }
 
 type Result struct {
-	URL       string
+	URL       catalog.RepositoryURL
 	Reference catalog.Reference
 	Path      string
 }
@@ -35,7 +34,7 @@ func Format(output Output) string {
 	repositoryWidth := len(repositoryHeader)
 	referenceWidth := len(referenceHeader)
 	for _, result := range output.Results {
-		repositoryWidth = max(repositoryWidth, utf8.RuneCountInString(result.URL))
+		repositoryWidth = max(repositoryWidth, utf8.RuneCountInString(string(result.URL)))
 		referenceWidth = max(referenceWidth, utf8.RuneCountInString(result.Reference.Type)+1+utf8.RuneCountInString(result.Reference.Value))
 	}
 	var text strings.Builder
@@ -59,7 +58,7 @@ func (l Logic) List(selection Selection) ([]Result, error) {
 	var matches []match
 	search := strings.ToLower(strings.TrimSpace(selection.Search))
 	for _, entry := range doc.Repositories {
-		if !strings.Contains(strings.ToLower(repository.SearchPath(entry.URL)), search) {
+		if !strings.Contains(strings.ToLower(entry.URL.SearchPath()), search) {
 			continue
 		}
 		if selection.Reference != nil && !entry.Reference.Equal(*selection.Reference) {
@@ -71,7 +70,7 @@ func (l Logic) List(selection Selection) ([]Result, error) {
 	}
 	slices.SortFunc(matches, func(a, b match) int {
 		return cmp.Or(
-			strings.Compare(a.result.URL, b.result.URL),
+			cmp.Compare(a.result.URL, b.result.URL),
 			a.addedAt.Compare(b.addedAt),
 			strings.Compare(a.result.Reference.Type, b.result.Reference.Type),
 			strings.Compare(a.result.Reference.Value, b.result.Reference.Value),

@@ -41,8 +41,8 @@ func (GitCLI) run(ctx context.Context, dir string, args ...string) (string, erro
 	return string(output), nil
 }
 
-func (g GitCLI) DefaultBranch(ctx context.Context, url string) (string, error) {
-	output, err := g.run(ctx, "", "ls-remote", "--symref", "--", url, "HEAD")
+func (g GitCLI) DefaultBranch(ctx context.Context, url catalog.RepositoryURL) (string, error) {
+	output, err := g.run(ctx, "", "ls-remote", "--symref", "--", string(url), "HEAD")
 	if err != nil {
 		return "", err
 	}
@@ -57,10 +57,10 @@ func (g GitCLI) DefaultBranch(ctx context.Context, url string) (string, error) {
 	return "", fmt.Errorf("remote did not advertise a default branch in HEAD")
 }
 
-func (g GitCLI) Install(ctx context.Context, url string, ref catalog.Reference, dir string) error {
+func (g GitCLI) Install(ctx context.Context, url catalog.RepositoryURL, ref catalog.Reference, dir string) error {
 	steps := [][]string{
 		{"init", "--quiet", "--template="},
-		{"remote", "add", "origin", url},
+		{"remote", "add", "origin", string(url)},
 	}
 	switch ref.Type {
 	case "branch":

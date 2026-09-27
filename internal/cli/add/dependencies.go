@@ -7,8 +7,8 @@ import (
 )
 
 type Git interface {
-	DefaultBranch(context.Context, string) (string, error)
-	Install(context.Context, string, catalog.Reference, string) error
+	DefaultBranch(context.Context, catalog.RepositoryURL) (string, error)
+	Install(context.Context, catalog.RepositoryURL, catalog.Reference, string) error
 }
 
 type CheckoutDirs interface {

@@ -1,4 +1,4 @@
-package repository
+package catalog
 
 import (
 	"fmt"
@@ -8,14 +8,16 @@ import (
 	"unicode"
 )
 
-// SearchPath returns the repository namespace and name, without its transport or host.
-// Callers pass remote URLs already validated by NormalizeURL.
-func SearchPath(remote string) string {
+// RepositoryURL is a validated remote URL. Catalogue reads trust saved URLs.
+type RepositoryURL string
+
+// SearchPath returns the repository namespace and name without its transport or host.
+func (remote RepositoryURL) SearchPath() string {
 	var path string
-	if scpRemote.MatchString(remote) {
-		_, path, _ = strings.Cut(remote, ":")
+	if scpRemote.MatchString(string(remote)) {
+		_, path, _ = strings.Cut(string(remote), ":")
 	} else {
-		parsed, err := url.Parse(remote)
+		parsed, err := url.Parse(string(remote))
 		if err != nil {
 			return ""
 		}
@@ -27,20 +29,21 @@ func SearchPath(remote string) string {
 var shorthand = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
 var scpRemote = regexp.MustCompile(`^[^@/:\s]+@[^@/:\s]+:.+$`)
 
-func NormalizeURL(input string) (string, error) {
+// ParseRepositoryURL validates a remote URL or expands an owner/repo shorthand.
+func ParseRepositoryURL(input string) (RepositoryURL, error) {
 	if shorthand.MatchString(input) {
 		parts := strings.Split(input, "/")
 		if parts[0] == "." || parts[0] == ".." || parts[1] == "." || parts[1] == ".." {
 			return "", fmt.Errorf("invalid repository %q: expected owner/repo or a remote URL", input)
 		}
-		return "https://github.com/" + input + ".git", nil
+		return RepositoryURL("https://github.com/" + input + ".git"), nil
 	}
 	if scpRemote.MatchString(input) && validRemotePath(strings.SplitN(input, ":", 2)[1]) {
-		return input, nil
+		return RepositoryURL(input), nil
 	}
 	parsed, err := url.Parse(input)
 	if err == nil && (parsed.Scheme == "http" || parsed.Scheme == "https" || parsed.Scheme == "ssh" || parsed.Scheme == "git") && parsed.Hostname() != "" && validRemotePath(parsed.Path) {
-		return input, nil
+		return RepositoryURL(input), nil
 	}
 	return "", fmt.Errorf("invalid repository %q: expected owner/repo or an HTTP(S), ssh, git, or scp-style SSH remote URL", input)
 }

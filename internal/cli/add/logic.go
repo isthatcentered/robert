@@ -19,7 +19,7 @@ type Logic struct {
 
 type Result struct {
 	Status    string
-	URL       string
+	URL       catalog.RepositoryURL
 	Reference catalog.Reference
 	Path      string
 }
@@ -95,7 +95,7 @@ func addedResult(entry catalog.Entry) Result {
 	return Result{Status: "added", URL: entry.URL, Reference: entry.Reference, Path: entry.Path}
 }
 
-func gitContext(url, path string, err error) map[string]any {
+func gitContext(url catalog.RepositoryURL, path string, err error) map[string]any {
 	context := map[string]any{"url": url, "gitError": err.Error()}
 	if path != "" {
 		context["path"] = path

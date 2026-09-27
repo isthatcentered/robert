@@ -52,8 +52,12 @@ func (s *failingStore) Update(change func(*catalog.Document) error) error {
 
 type successfulGit struct{}
 
-func (successfulGit) DefaultBranch(context.Context, string) (string, error)            { return "main", nil }
-func (successfulGit) Install(context.Context, string, catalog.Reference, string) error { return nil }
+func (successfulGit) DefaultBranch(context.Context, catalog.RepositoryURL) (string, error) {
+	return "main", nil
+}
+func (successfulGit) Install(context.Context, catalog.RepositoryURL, catalog.Reference, string) error {
+	return nil
+}
 
 type recordingDirs struct {
 	path      string

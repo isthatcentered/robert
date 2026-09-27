@@ -18,7 +18,7 @@ type Logic struct {
 }
 
 type Result struct {
-	URL       string
+	URL       catalog.RepositoryURL
 	Reference catalog.Reference
 	Path      string
 	Status    string
@@ -57,7 +57,7 @@ func Format(output Output) string {
 	referenceWidth := len(referenceHeader)
 	checkoutWidth := len(checkoutHeader)
 	for _, result := range output.Results {
-		repositoryWidth = max(repositoryWidth, utf8.RuneCountInString(result.URL))
+		repositoryWidth = max(repositoryWidth, utf8.RuneCountInString(string(result.URL)))
 		referenceWidth = max(referenceWidth, utf8.RuneCountInString(result.Reference.Type)+1+utf8.RuneCountInString(result.Reference.Value))
 		checkoutWidth = max(checkoutWidth, utf8.RuneCountInString(result.Path))
 	}
@@ -110,7 +110,7 @@ func compareEntries(a, b catalog.Entry) int {
 	addedA, _ := time.Parse(time.RFC3339Nano, a.AddedAt)
 	addedB, _ := time.Parse(time.RFC3339Nano, b.AddedAt)
 	return cmp.Or(
-		strings.Compare(a.URL, b.URL),
+		cmp.Compare(a.URL, b.URL),
 		addedA.Compare(addedB),
 		strings.Compare(a.Reference.Type, b.Reference.Type),
 		strings.Compare(a.Reference.Value, b.Reference.Value),
