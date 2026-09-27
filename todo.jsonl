@@ -1,12 +1,12 @@
-{"version":2,"title":"Catalogue abstraction to ensure writing/reading the config alwasy follows the same rules ?","description":"","id":12,"status":"active"}
-{"version":2,"title":"File lock R/W","description":"","id":11,"status":"active"}
-{"version":2,"title":"List command","description":"","id":10,"status":"active"}
-{"version":2,"title":"Add command","description":"","id":8,"status":"done"}
-{"version":2,"title":"Remove command","description":"","id":9,"status":"done"}
-{"id":2,"title":"import from package.json","description":"","version":2,"status":"backlog"}
-{"version":2,"title":"Having the daemon allows us to keep track of what was last acceced and when for pruning","description":"","id":7,"status":"backlog"}
-{"id":6,"title":"Command to get the size of the repositories installed","description":"","version":2,"status":"backlog"}
-{"id":5,"title":"Do we need bubble tea or something","description":"","version":2,"status":"backlog"}
-{"id":4,"title":"Interactive tui to search/manage installed","description":"","version":2,"status":"backlog"}
-{"id":3,"title":"list --with-context add --with-context","description":"Adds a repo with the ref installed \n","version":2,"status":"backlog"}
-{"id":1,"title":"Handle concurrent add/delete/writes to config","description":"","version":2,"status":"backlog"}
+{"id":12,"status":"done","title":"Catalogue abstraction to ensure writing/reading the config alwasy follows the same rules ?","version":2,"description":""}
+{"id":10,"status":"done","title":"List command","version":2,"description":""}
+{"id":1,"status":"done","title":"Handle concurrent add/delete/writes to config","version":2,"description":""}
+{"id":11,"status":"done","title":"File lock R/W","version":2,"description":""}
+{"id":8,"status":"done","title":"Add command","version":2,"description":""}
+{"id":9,"status":"done","title":"Remove command","version":2,"description":""}
+{"id":2,"status":"backlog","title":"import from package.json","version":2,"description":""}
+{"id":7,"status":"discarded","title":"Having the daemon allows us to keep track of what was last acceced and when for pruning","version":2,"description":""}
+{"id":4,"status":"backlog","title":"Interactive tui to search/manage installed","version":2,"description":""}
+{"id":5,"status":"discarded","title":"Do we need bubble tea or something","version":2,"description":""}
+{"id":3,"status":"backlog","title":"list --with-context add --with-context","version":2,"description":"List only the repositories installed that match you current project (including the ref)\n\n"}
+{"id":6,"status":"backlog","title":"Command to get the size of the repositories installed","version":2,"description":""}

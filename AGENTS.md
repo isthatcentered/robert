@@ -1,7 +1,4 @@
-- Commit and isntall the cli once a change is done and all checks pass for the whole project
-
-## Guides
-- [vertical slice](/home/isthatcentered/Test/robert2/.agents/guides/vertical-slice.md)
+- Commit and install the cli once a change is done and all checks pass for the whole project
 
 ## Agent skills
 
