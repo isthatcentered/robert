@@ -22,8 +22,3 @@ type Entry struct {
 	Reference Reference
 	AddedAt   string
 }
-
-type Reference struct {
-	Type  string
-	Value string
-}

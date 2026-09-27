@@ -9,7 +9,6 @@ import (
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 func TestSaveFailureRemovesCheckoutAndReportsContext(t *testing.T) {
@@ -18,7 +17,7 @@ func TestSaveFailureRemovesCheckoutAndReportsContext(t *testing.T) {
 	store := &failingStore{doc: catalog.Document{Version: 1, InstallDir: filepath.Join(home, ".agents", "robert"), Repositories: []catalog.Entry{}}, saveErr: &catalog.StorageError{Operation: "write", Path: filepath.Join(home, ".robert"), Cause: errors.New("disk is full")}}
 	dirs := &recordingDirs{path: path, removeErr: errors.New("permission denied")}
 	logic := Logic{Catalog: store, Git: successfulGit{}, Dirs: dirs, Now: func() time.Time { return time.Unix(0, 0) }}
-	_, err := logic.Add(context.Background(), Selection{URL: "https://example.com/demo.git", Reference: &repository.Reference{Type: "branch", Value: "main"}})
+	_, err := logic.Add(context.Background(), Selection{URL: "https://example.com/demo.git", Reference: &catalog.Reference{Type: "branch", Value: "main"}})
 	if err == nil {
 		t.Fatal("expected save error")
 	}
@@ -53,8 +52,8 @@ func (s *failingStore) Update(change func(*catalog.Document) error) error {
 
 type successfulGit struct{}
 
-func (successfulGit) DefaultBranch(context.Context, string) (string, error)               { return "main", nil }
-func (successfulGit) Install(context.Context, string, repository.Reference, string) error { return nil }
+func (successfulGit) DefaultBranch(context.Context, string) (string, error)            { return "main", nil }
+func (successfulGit) Install(context.Context, string, catalog.Reference, string) error { return nil }
 
 type recordingDirs struct {
 	path      string

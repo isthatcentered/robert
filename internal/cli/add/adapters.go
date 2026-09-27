@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/isthatcentered/robert/internal/cli/repository"
+	"github.com/isthatcentered/robert/internal/catalog"
 )
 
 type GitCLI struct{}
@@ -57,7 +57,7 @@ func (g GitCLI) DefaultBranch(ctx context.Context, url string) (string, error) {
 	return "", fmt.Errorf("remote did not advertise a default branch in HEAD")
 }
 
-func (g GitCLI) Install(ctx context.Context, url string, ref repository.Reference, dir string) error {
+func (g GitCLI) Install(ctx context.Context, url string, ref catalog.Reference, dir string) error {
 	steps := [][]string{
 		{"init", "--quiet", "--template="},
 		{"remote", "add", "origin", url},

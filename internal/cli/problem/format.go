@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/isthatcentered/robert/internal/cli/repository"
+	"github.com/isthatcentered/robert/internal/catalog"
 )
 
 // Format renders a command failure for stderr without exposing the JSON error shape.
@@ -76,14 +76,14 @@ func Format(err error) string {
 
 func formatValue(value any) string {
 	switch v := value.(type) {
-	case repository.Reference:
+	case catalog.Reference:
 		return v.Type + " " + v.Value
-	case *repository.Reference:
+	case *catalog.Reference:
 		if v == nil {
 			return ""
 		}
 		return v.Type + " " + v.Value
-	case []repository.Reference:
+	case []catalog.Reference:
 		parts := make([]string, len(v))
 		for i, ref := range v {
 			parts[i] = formatValue(ref)

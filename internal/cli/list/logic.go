@@ -18,7 +18,7 @@ type Logic struct {
 
 type Result struct {
 	URL       string
-	Reference repository.Reference
+	Reference catalog.Reference
 	Path      string
 }
 
@@ -62,12 +62,12 @@ func (l Logic) List(selection Selection) ([]Result, error) {
 		if !strings.Contains(strings.ToLower(repository.SearchPath(entry.URL)), search) {
 			continue
 		}
-		if selection.Reference != nil && !repository.Reference(entry.Reference).Equal(*selection.Reference) {
+		if selection.Reference != nil && !entry.Reference.Equal(*selection.Reference) {
 			continue
 		}
 		// Saved configuration is authoritative; timestamps are trusted to be valid.
 		addedAt, _ := time.Parse(time.RFC3339Nano, entry.AddedAt)
-		matches = append(matches, match{Result{entry.URL, repository.Reference(entry.Reference), entry.Path}, addedAt})
+		matches = append(matches, match{Result{entry.URL, entry.Reference, entry.Path}, addedAt})
 	}
 	slices.SortFunc(matches, func(a, b match) int {
 		return cmp.Or(

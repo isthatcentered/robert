@@ -3,12 +3,12 @@ package add
 import (
 	"context"
 
-	"github.com/isthatcentered/robert/internal/cli/repository"
+	"github.com/isthatcentered/robert/internal/catalog"
 )
 
 type Git interface {
 	DefaultBranch(context.Context, string) (string, error)
-	Install(context.Context, string, repository.Reference, string) error
+	Install(context.Context, string, catalog.Reference, string) error
 }
 
 type CheckoutDirs interface {

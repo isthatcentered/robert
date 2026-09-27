@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/isthatcentered/robert/internal/catalog"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 type Logic struct {
@@ -20,7 +19,7 @@ type Logic struct {
 
 type Result struct {
 	URL       string
-	Reference repository.Reference
+	Reference catalog.Reference
 	Path      string
 	Status    string
 	Failure   string
@@ -120,7 +119,7 @@ func compareEntries(a, b catalog.Entry) int {
 }
 
 func (l Logic) updateOne(ctx context.Context, entry catalog.Entry) Result {
-	result := Result{URL: entry.URL, Reference: repository.Reference(entry.Reference), Path: entry.Path}
+	result := Result{URL: entry.URL, Reference: entry.Reference, Path: entry.Path}
 	failed := func(detail string) Result {
 		result.Status = "failed"
 		result.Failure = detail

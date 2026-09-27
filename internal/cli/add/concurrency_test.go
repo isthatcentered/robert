@@ -10,7 +10,6 @@ import (
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 func TestAddRechecksLatestCatalogueAfterCloning(t *testing.T) {
@@ -30,7 +29,7 @@ func TestAddRechecksLatestCatalogueAfterCloning(t *testing.T) {
 			t.Cleanup(func() { close(resumeClone) })
 			dirs := &cleanupDirs{store: store, removeErr: tc.cleanupErr}
 			first := Logic{Catalog: store, Git: pausedGit{cloneStarted, resumeClone}, Dirs: dirs}
-			selection := Selection{URL: "https://example.com/first.git", Reference: &repository.Reference{Type: "branch", Value: "main"}}
+			selection := Selection{URL: "https://example.com/first.git", Reference: &catalog.Reference{Type: "branch", Value: "main"}}
 			firstDone := make(chan addOutcome, 1)
 			go func() {
 				result, err := first.Add(context.Background(), selection)
@@ -103,7 +102,7 @@ func TestAddDoesNotDeleteCheckoutAfterCommittedUpdateError(t *testing.T) {
 		Operation: "unlock", Path: filepath.Join(home, ".robert"), LockPath: filepath.Join(home, ".robert.lock"), Committed: true, Cause: errors.New("unlock failed"),
 	}}
 	dirs := &recordingDirs{path: filepath.Join(home, "checkout")}
-	_, err := (Logic{Catalog: store, Git: successfulGit{}, Dirs: dirs}).Add(context.Background(), Selection{URL: "https://example.com/repo.git", Reference: &repository.Reference{Type: "branch", Value: "main"}})
+	_, err := (Logic{Catalog: store, Git: successfulGit{}, Dirs: dirs}).Add(context.Background(), Selection{URL: "https://example.com/repo.git", Reference: &catalog.Reference{Type: "branch", Value: "main"}})
 	if err == nil || dirs.removed != "" {
 		t.Fatalf("committed update cleanup=%q, error=%v", dirs.removed, err)
 	}
@@ -119,7 +118,7 @@ type pausedGit struct {
 }
 
 func (pausedGit) DefaultBranch(context.Context, string) (string, error) { return "main", nil }
-func (g pausedGit) Install(context.Context, string, repository.Reference, string) error {
+func (g pausedGit) Install(context.Context, string, catalog.Reference, string) error {
 	close(g.started)
 	<-g.resume
 	return nil

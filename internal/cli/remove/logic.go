@@ -7,7 +7,6 @@ import (
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 type Logic struct {
@@ -19,7 +18,7 @@ type Result struct {
 	Status       string
 	URL          string
 	Path         string
-	Reference    repository.Reference
+	Reference    catalog.Reference
 	AddedAt      string
 	CleanupError error
 }
@@ -40,18 +39,18 @@ func (l Logic) Remove(selection Selection) (*Result, error) {
 	changed := false
 	err := l.Catalog.Update(func(doc *catalog.Document) error {
 		index := -1
-		var references []repository.Reference
+		var references []catalog.Reference
 		for i, entry := range doc.Repositories {
 			if entry.URL != selection.URL {
 				continue
 			}
-			if selection.Reference != nil && !repository.Reference(entry.Reference).Equal(*selection.Reference) {
+			if selection.Reference != nil && !entry.Reference.Equal(*selection.Reference) {
 				continue
 			}
 			if index == -1 {
 				index = i
 			}
-			references = append(references, repository.Reference(entry.Reference))
+			references = append(references, entry.Reference)
 		}
 		if len(references) > 1 {
 			context := map[string]any{"url": selection.URL, "matchingReferences": references}
@@ -92,5 +91,5 @@ func (l Logic) Remove(selection Selection) (*Result, error) {
 		return nil, problem.Wrap("failed to save configuration before removing checkout", err, map[string]any{"url": entry.URL, "checkoutPath": entry.Path})
 	}
 	cleanupErr := l.Dirs.Remove(entry.Path)
-	return &Result{Status: "removed", URL: entry.URL, Path: entry.Path, Reference: repository.Reference(entry.Reference), AddedAt: entry.AddedAt, CleanupError: cleanupErr}, nil
+	return &Result{Status: "removed", URL: entry.URL, Path: entry.Path, Reference: entry.Reference, AddedAt: entry.AddedAt, CleanupError: cleanupErr}, nil
 }

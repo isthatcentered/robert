@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 const Usage = "robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
@@ -35,7 +35,7 @@ Examples:
 
 type Selection struct {
 	Search    string
-	Reference *repository.Reference
+	Reference *catalog.Reference
 	Help      bool
 	Filtered  bool
 }
@@ -87,7 +87,7 @@ func parseArgs(args []string) (Selection, error) {
 			if value == "" || strings.HasPrefix(value, "--") {
 				return fmt.Errorf("--%s requires a nonempty value", kind)
 			}
-			ref := repository.Reference{Type: kind, Value: value}
+			ref := catalog.Reference{Type: kind, Value: value}
 			if err := ref.Validate(); err != nil {
 				return err
 			}

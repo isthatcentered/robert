@@ -29,15 +29,10 @@ type jsonDocument struct {
 }
 
 type jsonEntry struct {
-	URL       string        `json:"url"`
-	Path      string        `json:"path"`
-	Reference jsonReference `json:"reference"`
-	AddedAt   string        `json:"addedAt"`
-}
-
-type jsonReference struct {
-	Type  string `json:"type"`
-	Value string `json:"value"`
+	URL       string    `json:"url"`
+	Path      string    `json:"path"`
+	Reference Reference `json:"reference"`
+	AddedAt   string    `json:"addedAt"`
 }
 
 func (s JSONFileCatalog) Read() (doc Document, err error) {
@@ -111,7 +106,7 @@ func (s JSONFileCatalog) read() (Document, error) {
 		doc.Repositories = make([]Entry, len(saved.Repositories))
 	}
 	for i, entry := range saved.Repositories {
-		doc.Repositories[i] = Entry{URL: entry.URL, Path: entry.Path, Reference: Reference(entry.Reference), AddedAt: entry.AddedAt}
+		doc.Repositories[i] = Entry{URL: entry.URL, Path: entry.Path, Reference: entry.Reference, AddedAt: entry.AddedAt}
 	}
 	return doc, nil
 }
@@ -122,7 +117,7 @@ func (s JSONFileCatalog) save(doc Document) error {
 		saved.Repositories = make([]jsonEntry, len(doc.Repositories))
 	}
 	for i, entry := range doc.Repositories {
-		saved.Repositories[i] = jsonEntry{URL: entry.URL, Path: entry.Path, Reference: jsonReference(entry.Reference), AddedAt: entry.AddedAt}
+		saved.Repositories[i] = jsonEntry{URL: entry.URL, Path: entry.Path, Reference: entry.Reference, AddedAt: entry.AddedAt}
 	}
 	data, err := json.MarshalIndent(saved, "", "  ")
 	if err != nil {

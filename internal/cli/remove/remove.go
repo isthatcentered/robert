@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
 	"github.com/isthatcentered/robert/internal/cli/repository"
 )
@@ -49,7 +50,7 @@ func Handle(args []string, logic Logic) (any, error) {
 
 type Selection struct {
 	URL       string
-	Reference *repository.Reference
+	Reference *catalog.Reference
 	Help      bool
 }
 
@@ -75,7 +76,7 @@ func parseArgs(args []string) (Selection, error) {
 			if value == "" || strings.HasPrefix(value, "--") {
 				return fmt.Errorf("--%s requires a nonempty value", kind)
 			}
-			ref := repository.Reference{Type: kind, Value: value}
+			ref := catalog.Reference{Type: kind, Value: value}
 			if err := ref.Validate(); err != nil {
 				return err
 			}

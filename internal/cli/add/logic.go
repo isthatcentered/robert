@@ -8,7 +8,6 @@ import (
 
 	"github.com/isthatcentered/robert/internal/catalog"
 	"github.com/isthatcentered/robert/internal/cli/problem"
-	"github.com/isthatcentered/robert/internal/cli/repository"
 )
 
 type Logic struct {
@@ -21,7 +20,7 @@ type Logic struct {
 type Result struct {
 	Status    string
 	URL       string
-	Reference repository.Reference
+	Reference catalog.Reference
 	Path      string
 }
 
@@ -40,10 +39,10 @@ func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 		if err != nil {
 			return Result{}, problem.New("failed to resolve repository default branch", gitContext(selection.URL, "", err))
 		}
-		ref = &repository.Reference{Type: "branch", Value: branch}
+		ref = &catalog.Reference{Type: "branch", Value: branch}
 	}
 	for _, entry := range doc.Repositories {
-		if entry.URL == selection.URL && repository.Reference(entry.Reference).Equal(*ref) {
+		if entry.URL == selection.URL && entry.Reference.Equal(*ref) {
 			return addedResult(entry), nil
 		}
 	}
@@ -62,11 +61,11 @@ func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 	if l.Now != nil {
 		now = l.Now
 	}
-	entry := catalog.Entry{URL: selection.URL, Path: path, Reference: catalog.Reference(*ref), AddedAt: now().UTC().Format(time.RFC3339Nano)}
+	entry := catalog.Entry{URL: selection.URL, Path: path, Reference: *ref, AddedAt: now().UTC().Format(time.RFC3339Nano)}
 	redundant := false
 	err = l.Catalog.Update(func(latest *catalog.Document) error {
 		for _, saved := range latest.Repositories {
-			if saved.URL == selection.URL && repository.Reference(saved.Reference).Equal(*ref) {
+			if saved.URL == selection.URL && saved.Reference.Equal(*ref) {
 				entry = saved
 				redundant = true
 				return nil
@@ -93,7 +92,7 @@ func (l Logic) Add(ctx context.Context, selection Selection) (Result, error) {
 }
 
 func addedResult(entry catalog.Entry) Result {
-	return Result{Status: "added", URL: entry.URL, Reference: repository.Reference(entry.Reference), Path: entry.Path}
+	return Result{Status: "added", URL: entry.URL, Reference: entry.Reference, Path: entry.Path}
 }
 
 func gitContext(url, path string, err error) map[string]any {

@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/isthatcentered/robert/internal/cli/repository"
+	"github.com/isthatcentered/robert/internal/catalog"
 )
 
 func TestFormatAmbiguousCheckoutError(t *testing.T) {
 	err := New("multiple saved checkouts match this repository", map[string]any{
 		"url":                "https://github.com/acme/api.git",
-		"matchingReferences": []repository.Reference{{Type: "branch", Value: "main"}, {Type: "tag", Value: "v1.0.0"}},
+		"matchingReferences": []catalog.Reference{{Type: "branch", Value: "main"}, {Type: "tag", Value: "v1.0.0"}},
 		"hint":               "specify --branch, --tag, or --commit",
 	})
 	got := Format(err)
