@@ -10,7 +10,7 @@ import (
 
 const Usage = "robert update"
 
-const Help = `Update saved branches in your code reference library.
+const Help = `Update the repositories in your library to the latest version.
 
 Usage:
   robert update

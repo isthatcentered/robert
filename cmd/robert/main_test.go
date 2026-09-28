@@ -44,11 +44,11 @@ func TestHelpShowsCommandExamples(t *testing.T) {
 		args []string
 		want []string
 	}{
-		{[]string{"--help"}, []string{"Manage your local code reference library for AI agents", "Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api", "robert update"}},
-		{[]string{"add", "--help"}, []string{"Add a repository to your code reference library.", "robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
-		{[]string{"remove", "--help"}, []string{"Remove a repository from your code reference library.", "robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
-		{[]string{"list", "--help"}, []string{"Explore your code reference library.", "robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
-		{[]string{"update", "--help"}, []string{"Update saved branches in your code reference library.", "robert update", "fast-forward-only"}},
+		{[]string{"--help"}, []string{"Manage your local code reference library for AI agents", "Usage:\n  robert <command> [arguments]", "add       Add a repository to your library", "list      List the repositories in your library", "update    Update the repositories in your library to the latest version", "remove    Remove a repository from your library", "robert add acme/api", "robert list", "robert remove acme/api", "robert update"}},
+		{[]string{"add", "--help"}, []string{"Add a repository to your library.", "robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
+		{[]string{"remove", "--help"}, []string{"Remove a repository from your library.", "robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
+		{[]string{"list", "--help"}, []string{"List the repositories in your library.", "robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
+		{[]string{"update", "--help"}, []string{"Update the repositories in your library to the latest version.", "robert update", "fast-forward-only"}},
 	} {
 		var stdout, stderr bytes.Buffer
 		if code := run(context.Background(), tc.args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {

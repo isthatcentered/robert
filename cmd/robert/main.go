@@ -19,10 +19,10 @@ Usage:
   robert <command> [arguments]
 
 Commands:
-  add       Add a repository
-  list      Explore your library
-  update    Update saved branches
-  remove    Remove a repository
+  add       Add a repository to your library
+  list      List the repositories in your library
+  update    Update the repositories in your library to the latest version
+  remove    Remove a repository from your library
 
 Examples:
   robert add acme/api
