@@ -15,7 +15,7 @@ go install github.com/isthatcentered/robert/cmd/robert@latest
 
 Without Go, download a binary for your platform from [GitHub Releases](https://github.com/isthatcentered/robert/releases).
 
-### Agent skill
+## Agent skill
 
 Save [SKILL.md](SKILL.md) as `view-source-code/SKILL.md` in your agent's global skills directory
 (for example, `~/.agents/skills/view-source-code/SKILL.md`).
