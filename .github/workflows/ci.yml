@@ -1,0 +1,65 @@
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+      - name: Check formatting
+        shell: bash
+        run: |
+          unformatted=$(gofmt -l cmd internal)
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+      - run: go vet ./...
+      - run: go test -race ./...
+      - name: CLI QA
+        # Keep the existing cleanup limitation visible; reject any new finding.
+        run: python3 scripts/qa_cli.py --allow-finding silent-redundant-clone-cleanup-failure
+
+  release-check:
+    name: Check release configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7
+        with:
+          version: v2.18.2
+          args: check
+      - name: Rehearse release
+        run: goreleaser release --snapshot --clean
+      - name: Smoke test Linux archive
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/robert-release"
+          tar -xzf dist/robert_*_linux_amd64.tar.gz -C "$RUNNER_TEMP/robert-release"
+          version=$("$RUNNER_TEMP/robert-release/robert" --version)
+          printf '%s\n' "$version"
+          [[ "$version" == robert\ *-SNAPSHOT-* ]]
+          "$RUNNER_TEMP/robert-release/robert" --help

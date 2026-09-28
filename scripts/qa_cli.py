@@ -436,6 +436,8 @@ def main():
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--rounds", type=int, default=5)
     parser.add_argument("--report", type=Path, default=Path("/tmp/robert-qa-results.json"))
+    parser.add_argument("--allow-finding", action="append", default=[], metavar="ID",
+                        help="Allow a known finding ID without hiding it in the report; repeatable")
     args = parser.parse_args()
     if args.workers < 2 or args.rounds < 1:
         parser.error("workers must be >= 2 and rounds >= 1")
@@ -486,9 +488,11 @@ def main():
     }
     failed = report.get("fatal_error") or any(c["status"] == "failed" for c in report["cases"]) or not report["cleanup_verified"]
     report["status"] = "failed" if failed else "issues_found" if report["findings"] else "passed"
+    report["allowed_finding_ids"] = sorted(set(args.allow_finding))
+    unexpected = [f for f in report["findings"] if f["id"] not in args.allow_finding]
     args.report.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({k: v for k, v in report.items() if k not in ("commands", "batches")}, indent=2))
-    return 1 if failed else 2 if report["findings"] else 0
+    return 1 if failed else 2 if unexpected else 0
 
 
 if __name__ == "__main__":

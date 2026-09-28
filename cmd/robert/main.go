@@ -13,6 +13,9 @@ import (
 	"github.com/isthatcentered/robert/internal/cli/update"
 )
 
+// version is set by GoReleaser through the linker at build time.
+var version = "dev"
+
 const help = `Manage your local code reference library for AI agents
 
 Usage:
@@ -23,6 +26,9 @@ Commands:
   list      List the repositories in your library
   update    Update the repositories in your library to the latest version
   remove    Remove a repository from your library
+
+Options:
+  --version Show the installed version
 
 Examples:
   robert add acme/api
@@ -42,6 +48,12 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	}
 	if args[0] == "-h" || args[0] == "--help" {
 		return writeText(stdout, stderr, help+"\n")
+	}
+	if args[0] == "--version" {
+		if len(args) != 1 {
+			return writeError(stderr, problem.New("--version does not accept arguments", nil))
+		}
+		return writeText(stdout, stderr, "robert "+version+"\n")
 	}
 	if args[0] != "add" && args[0] != "remove" && args[0] != "list" && args[0] != "update" {
 		return writeError(stderr, problem.New("unknown command", map[string]any{"command": args[0]}))
