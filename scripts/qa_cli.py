@@ -320,12 +320,13 @@ class QA:
         self.verify(0)
 
     def lock_failure(self):
-        (self.home / ".robert.lock").mkdir()
+        # macOS permits locking directories; use an unopenable target instead.
+        (self.home / ".robert.lock").symlink_to(self.home / "missing" / "lock")
         for args in (("list",), ("add", REMOTE, "--branch", "main"), ("remove", REMOTE)):
             result = self.cli(*args, code=1)
             require(result["context"].get("lockPath") and result["context"].get("hint"),
                     "lock error lacks recovery context")
-        (self.home / ".robert.lock").rmdir()
+        (self.home / ".robert.lock").unlink()
         self.verify(0)
 
     def deletion_failure(self):

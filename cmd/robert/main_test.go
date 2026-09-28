@@ -442,7 +442,9 @@ func TestAllCommandsReportLockFailuresWithStorageContext(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	lockPath := filepath.Join(home, ".robert.lock")
-	if err := os.Mkdir(lockPath, 0700); err != nil {
+	// A directory can be locked on macOS. A missing target parent prevents
+	// opening the lock file on both Linux and macOS.
+	if err := os.Symlink(filepath.Join(home, "missing", "lock"), lockPath); err != nil {
 		t.Fatal(err)
 	}
 	for _, args := range [][]string{{"list"}, {"add", "owner/repo", "--branch", "main"}, {"remove", "owner/repo"}, {"update"}} {
