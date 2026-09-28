@@ -45,10 +45,10 @@ func TestHelpShowsCommandExamples(t *testing.T) {
 		want []string
 	}{
 		{[]string{"--help"}, []string{"Manage your local code reference library for AI agents", "Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api", "robert update"}},
-		{[]string{"add", "--help"}, []string{"robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
-		{[]string{"remove", "--help"}, []string{"robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
-		{[]string{"list", "--help"}, []string{"robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
-		{[]string{"update", "--help"}, []string{"robert update", "fast-forward-only"}},
+		{[]string{"add", "--help"}, []string{"Add a repository to your code reference library.", "robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
+		{[]string{"remove", "--help"}, []string{"Remove a repository from your code reference library.", "robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
+		{[]string{"list", "--help"}, []string{"Explore your code reference library.", "robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
+		{[]string{"update", "--help"}, []string{"Update saved branches in your code reference library.", "robert update", "fast-forward-only"}},
 	} {
 		var stdout, stderr bytes.Buffer
 		if code := run(context.Background(), tc.args, &stdout, &stderr); code != 0 || stderr.Len() != 0 {

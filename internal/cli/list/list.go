@@ -13,7 +13,7 @@ import (
 
 const Usage = "robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
-const Help = `List saved repository checkouts.
+const Help = `Explore your code reference library.
 
 Usage:
   robert list [--search <text>] [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]

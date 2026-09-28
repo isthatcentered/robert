@@ -14,7 +14,7 @@ import (
 
 const Usage = "robert add <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
-const Help = `Add a repository.
+const Help = `Add a repository to your code reference library.
 
 Usage:
   robert add <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]

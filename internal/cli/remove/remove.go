@@ -13,7 +13,7 @@ import (
 
 const Usage = "robert remove <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]"
 
-const Help = `Remove a repository checkout from the catalogue.
+const Help = `Remove a repository from your code reference library.
 
 Usage:
   robert remove <repo> [--branch <name> | --tag <name> | --commit <full-40-hex-ID>]
