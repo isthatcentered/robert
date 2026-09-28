@@ -1,10 +1,12 @@
+{"description":"","status":"backlog","title":"init command","version":2,"id":14}
+{"id":2,"status":"backlog","title":"import from package.json","version":2,"description":""}
 {"id":12,"status":"done","title":"Catalogue abstraction to ensure writing/reading the config alwasy follows the same rules ?","version":2,"description":""}
 {"id":10,"status":"done","title":"List command","version":2,"description":""}
 {"id":1,"status":"done","title":"Handle concurrent add/delete/writes to config","version":2,"description":""}
 {"id":11,"status":"done","title":"File lock R/W","version":2,"description":""}
 {"id":8,"status":"done","title":"Add command","version":2,"description":""}
 {"id":9,"status":"done","title":"Remove command","version":2,"description":""}
-{"id":2,"status":"backlog","title":"import from package.json","version":2,"description":""}
+{"description":"","status":"backlog","title":"Add the view-source-code skill","version":2,"id":13}
 {"id":7,"status":"discarded","title":"Having the daemon allows us to keep track of what was last acceced and when for pruning","version":2,"description":""}
 {"id":4,"status":"backlog","title":"Interactive tui to search/manage installed","version":2,"description":""}
 {"id":5,"status":"discarded","title":"Do we need bubble tea or something","version":2,"description":""}
