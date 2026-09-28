@@ -3,7 +3,7 @@ Don't let your agent make stuff up.
 
 
 ## Why
-Documentation is often out of date, source code is not. Robert makes it easy to manage a library of local repositories so that your agent can simply source dive for the answer instead of making it up or relying on out of date documentation.
+Documentation gets out of date, source code does not. Robert makes it easy to manage a library of local repositories so that your agent can simply source dive for the answer instead of making it up or relying on out of date documentation.
 
 ## Install
 
@@ -12,11 +12,6 @@ Install [Go](https://go.dev/dl/) (the version in `go.mod` or newer) and Git, the
 ```sh
 go install github.com/isthatcentered/robert/cmd/robert@latest
 ```
-
-Add your Go binary directory (`$GOBIN`, usually `~/go/bin`) to `PATH`.
-Run the same command to upgrade, or replace `@latest` with `@v0.1.0` to pin a version.
-While the repository is private, set `GOPRIVATE=github.com/isthatcentered/robert` and authenticate Git with GitHub.
-Go-installed builds currently report `robert dev` from `robert --version`.
 
 Without Go, download a binary for your platform from [GitHub Releases](https://github.com/isthatcentered/robert/releases).
 
@@ -32,11 +27,11 @@ Optionally add this to your global `AGENTS.md`:
 ## Quickstart
 
 ```sh
-robert add spf13/cobra
+robert add isthatcentered/robert
 robert add goreleaser/goreleaser --tag v2.18.2
 robert list
 robert update
-robert remove spf13/cobra
+robert remove isthatcentered/robert
 ```
 
 `robert update` updates the repositories in your library. To upgrade Robert itself, rerun the install command.
