@@ -7,62 +7,27 @@ Documentation is often out of date, source code is not. Robert makes it easy to 
 
 ## Install
 
-Robert requires Git on your `PATH`. Downloaded executables do not require Go.
-
-Download an archive and `checksums.txt` from [GitHub Releases](https://github.com/isthatcentered/robert/releases).
-While the repository is private, you must sign into a GitHub account with access.
-
-| Your machine | Archive suffix |
-| --- | --- |
-| Linux, Intel/AMD 64-bit | `linux_amd64.tar.gz` |
-| Linux, ARM 64-bit | `linux_arm64.tar.gz` |
-| macOS, Intel | `darwin_amd64.tar.gz` |
-| macOS, Apple Silicon | `darwin_arm64.tar.gz` |
-
-For example, for version 0.1.0 on Linux Intel/AMD, run these commands from the download directory:
+Install [Go](https://go.dev/dl/) (the version in `go.mod` or newer) and Git, then run:
 
 ```sh
-shasum -a 256 robert_0.1.0_linux_amd64.tar.gz
-# Compare the hash with this archive's entry in checksums.txt.
-tar -xzf robert_0.1.0_linux_amd64.tar.gz
-mkdir -p "$HOME/.local/bin"
-install -m 755 robert "$HOME/.local/bin/robert"
-export PATH="$HOME/.local/bin:$PATH"
-robert --version
+go install github.com/isthatcentered/robert/cmd/robert@latest
 ```
 
-Use the filename for your version and machine. Add the `export PATH` line to your shell's startup file
-(`~/.zshrc` or `~/.bashrc`) to keep it in future terminals.
+Add your Go binary directory (`$GOBIN`, usually `~/go/bin`) to `PATH`.
+Run the same command to upgrade, or replace `@latest` with `@v0.1.0` to pin a version.
+While the repository is private, set `GOPRIVATE=github.com/isthatcentered/robert` and authenticate Git with GitHub.
+Go-installed builds currently report `robert dev` from `robert --version`.
 
-If you previously installed Robert using Go, remove the old executable from your Go binary directory
-(usually `~/go/bin/robert`) before installing the download. `type -a robert` shows which copies your
-shell can find. Your catalogue in `~/.robert` and checkouts in `~/.agents/robert` are retained when you
-replace or remove the executable. To upgrade, install the newer release using the same steps.
+Without Go, download a binary for your platform from [GitHub Releases](https://github.com/isthatcentered/robert/releases).
 
-### Install the agent skill
+### Agent skill
 
-Each archive includes `SKILL.md`. Copy it into your agent's global skills directory under
-`view-source-code/SKILL.md`. For example, if your agent uses `~/.agents/skills`:
-
-```sh
-mkdir -p "$HOME/.agents/skills/view-source-code"
-cp SKILL.md "$HOME/.agents/skills/view-source-code/SKILL.md"
-```
+Save [SKILL.md](SKILL.md) as `view-source-code/SKILL.md` in your agent's global skills directory
+(for example, `~/.agents/skills/view-source-code/SKILL.md`).
 
 Optionally add this to your global `AGENTS.md`:
 
 > Use the `view-source-code` skill as your primary way to learn how to use a library or tool, or understand its implementation, whenever you can access and clone its repository. Fallback to context7 MCP when otherwise.
-
-### Build from source
-
-With the Go version specified in `go.mod` installed, run this from a checkout:
-
-```sh
-go install ./cmd/robert
-```
-
-Ensure your Go binary directory is on `PATH`. Source builds report `robert dev`; release builds
-report the version embedded by GoReleaser.
 
 ## Quickstart
 
@@ -74,7 +39,7 @@ robert update
 robert remove spf13/cobra
 ```
 
-`robert update` updates the repositories in your library. To upgrade Robert itself, install a newer release.
+`robert update` updates the repositories in your library. To upgrade Robert itself, rerun the install command.
 Run `robert --help` or `robert <command> --help` for more options.
 
 ## Development and releases
