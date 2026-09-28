@@ -13,22 +13,22 @@ import (
 	"github.com/isthatcentered/robert/internal/cli/update"
 )
 
-const help = `Manage local checkouts of remote Git repositories.
+const help = `Manage your local code reference library for AI agents
 
 Usage:
   robert <command> [arguments]
 
 Commands:
   add       Add a repository
-  remove    Remove a repository checkout
-  list      List repository checkouts
-  update    Update installed branch checkouts
+  list      Explore your library
+  update    Update saved branches
+  remove    Remove a repository
 
 Examples:
   robert add acme/api
   robert list
   robert update
-  robert remove acme/api --branch main
+  robert remove acme/api
 
 Run "robert <command> --help" for command details.`
 

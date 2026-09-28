@@ -44,7 +44,7 @@ func TestHelpShowsCommandExamples(t *testing.T) {
 		args []string
 		want []string
 	}{
-		{[]string{"--help"}, []string{"Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api --branch main", "robert update"}},
+		{[]string{"--help"}, []string{"Manage your local code reference library for AI agents", "Usage:\n  robert <command> [arguments]", "robert add acme/api", "robert list", "robert remove acme/api", "robert update"}},
 		{[]string{"add", "--help"}, []string{"robert add acme/api", "robert add https://github.com/isthatcentered/robert.git", "robert add acme/api --commit 0123456789abcdef0123456789abcdef01234567"}},
 		{[]string{"remove", "--help"}, []string{"robert remove acme/api", "robert remove https://github.com/isthatcentered/robert.git", "robert remove acme/api --branch main"}},
 		{[]string{"list", "--help"}, []string{"robert list", "robert list --search acme/api", "robert list --search acme --tag v1.0.0"}},
